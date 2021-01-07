@@ -1,7 +1,8 @@
 # camunda-externaltask-handler
 
 This library provides the ExternalTaskHandler bean which can be used for local implementation of [Camunda's external tasks ](https://docs.camunda.org/manual/7.14/user-guide/process-engine/external-tasks/) easily:
-```
+
+```java
   @PostConstruct
   private void init() {
      // variant 1:
@@ -40,7 +41,7 @@ External tasks need to be locked. So processing should not take more time than t
 
 The external task retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for backoff retry behavior (see Javadoc of RetryableException).
 
-```
+```java
   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
          Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception {
     throw new RetryableException("failed", 5, retries, List.of(5000l, 60000l)); // retry after 5 seconds and afterwards after 1 minute
@@ -51,7 +52,7 @@ The external task retry counter is provided which has to be passed to the Retrya
 
 Dependency:
 
-```
+```xml
 <dependency>
   <groupId>org.camunda.bpm.externaltask</groupId>
   <artifactId>spring-externaltask-handler</artifactId>
@@ -60,7 +61,7 @@ Dependency:
 
 Usage:
 
-```
+```java
 @Autowired
 private ExternalTaskHandler externalTaskHandler;
   
@@ -88,7 +89,7 @@ There is a integration test `spring-externaltask-handler/src/test/java:org.camun
 
 Dependency:
 
-```
+```xml
 <dependency>
   <groupId>org.camunda.bpm.externaltask</groupId>
   <artifactId>ejb-externaltask-handler</artifactId>
@@ -97,7 +98,7 @@ Dependency:
 
 Usage:
 
-```
+```java
 @EJB
 private ExternalTaskHandler externalTaskHandler;
 
