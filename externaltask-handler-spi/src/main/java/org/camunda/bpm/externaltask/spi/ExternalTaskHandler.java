@@ -155,5 +155,22 @@ public interface ExternalTaskHandler {
     void registerExternalTaskProcessor(String processDefinitionKey, String topic,
             ExternalTaskHandlerProcessor processor, Long lockTimeout,
             String firstVariableToFetch, String... variablesToFetch);
+
+    /**
+     * @param workerId Used to lock external tasks. e.g. the machine's name or IP address
+     * 
+     * @see https://docs.camunda.org/manual/7.13/user-guide/process-engine/external-tasks/
+     */
+    void setWorkerId(String workerId);
+    
+    /**
+     * @param lockTimeout Use as a lock timeout for external tasks, if no specific timeout was used.
+     * 
+     * @see https://docs.camunda.org/manual/7.13/user-guide/process-engine/external-tasks/
+     * @see ExternalTaskHandler#registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, Long)
+     * @see ExternalTaskHandler#registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, boolean, Long)
+     * @see ExternalTaskHandler#registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, Long, String, String...)
+     */
+    void setDefaultLockTimeout(long lockTimeout);
     
 }

@@ -48,7 +48,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     private CdiExternalTaskHandlerHelper helper;
     
     @Inject
-    private CdiExternalTaskHandlerConfigrator configurator;
+    private ExternalTaskHandlerConfigrator configurator;
     
     @PostConstruct
     private void configure() {
@@ -62,6 +62,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
         return defaultLockTimeout;
     }
     
+    @Override
     public void setDefaultLockTimeout(long defaultLockTimeout) {
         this.defaultLockTimeout = defaultLockTimeout;
     }
@@ -71,6 +72,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
         return workerId;
     }
     
+    @Override
     public void setWorkerId(String workerId) {
         this.workerId = workerId;
     }

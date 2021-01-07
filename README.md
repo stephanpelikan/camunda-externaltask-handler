@@ -1,10 +1,7 @@
 # camunda-externaltask-handler
 
-Provides the ExternalTaskHandler bean which can be used to process external tasks easily:
+This library provides the ExternalTaskHandler bean which can be used for local implementation of [Camunda's external tasks ](https://docs.camunda.org/manual/7.14/user-guide/process-engine/external-tasks/) easily:
 ```
-  @Autowired
-  private ExternalTaskHandler externalTaskHandler;
-  
   @PostConstruct
   private void init() {
      // variant 1:
@@ -33,13 +30,15 @@ A processor method for a certain process definition and a specific topic has to 
 * throw a RetryableException if an incident should be created after a defined number of further attempts
 * throw an Exception if an incident should be created immediately
 
+*Hint*: The processor method is called immediately after task creation but in an asynchronous fashion having its own transaction. Therefor you need to be aware of possible OptimisticLockingExceptions (see Camunda's ["best practices"](https://camunda.com/best-practices/dealing-with-problems-and-exceptions/#__strong_do_strong_configure_a_savepoint_strong_before_strong)). As a rule of thumb an "asyncAfter=true" can be placed on each task processed by the ExternalTaskHandler.
+
 ### Lock timeout
 
 External tasks need to be locked. So processing should not take more time than the lock timeout. The default timeout is a minute. If the lock timeout expires (for example due to system failures) then the task will be retried in an one minute interval. A non standard lock timeout can be defined on method regristration.
 
 ### Backkoff retry handling
 
-The retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for backoff retry behavior (see Javadoc of RetryableException).
+The external task retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for backoff retry behavior (see Javadoc of RetryableException).
 
 ```
   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
@@ -49,6 +48,27 @@ The retry counter is provided which has to be passed to the RetryableException t
 ```
 
 ## Spring
+
+Dependency:
+
+```
+<dependency>
+  <groupId>org.camunda.bpm.externaltask</groupId>
+  <artifactId>spring-externaltask-handler</artifactId>
+</dependency>
+```
+
+Usage:
+
+```
+@Autowired
+private ExternalTaskHandler externalTaskHandler;
+  
+@PostConstruct
+private void init() {
+  // see examples in the top section of the README.md
+}
+```
 
 ### Preconditions
 
@@ -60,5 +80,43 @@ Find the class `org.camunda.bpm.externaltask.spring.AsyncConfiguration` in `src/
 
 The default lock timeout can be configured using the property `camunda.bpm.externaltask-handler.default-locktimeout`.
 
-## CDI
+### Testing
 
+There is a integration test `spring-externaltask-handler/src/test/java:org.camunda.bpm.externaltask.spring.SpringExternalTaskHandlerIT`. It tests the Spring integration and the entire functionality of the ExternalTaskHandler.
+
+## EJB
+
+Dependency:
+
+```
+<dependency>
+  <groupId>org.camunda.bpm.externaltask</groupId>
+  <artifactId>ejb-externaltask-handler</artifactId>
+</dependency>
+```
+
+Usage:
+
+```
+@EJB
+private ExternalTaskHandler externalTaskHandler;
+
+@PostConstruct
+private void init() {
+  // see examples in the top section of the README.md
+}
+```
+
+### Preconditions
+
+To configure the default lock timeout and the worker id you have to provide a CDI implemenation of the interface `org.camunda.bpm.externaltask.cdi.ExternalTaskHandlerConfigrator`. It can be used to get load those values externally e.g. from a configuration file or a system property.
+
+For an example see `ejb-externaltask-testwebapp/src/main/java:org.camunda.bpm.externaltask.MyCdiExternalTaskConfigurator`
+
+### Testing
+
+There is a test webapp `ejb-externaltask-testwebapp`. It tests the EJB integration and the core functionality of the ExternalTaskHandler.
+
+Once deployed it can be used by these REST-endpoints:
+* [http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/test/handle](http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/test/handle)
+* [http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/test/retry](http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/test/retry])

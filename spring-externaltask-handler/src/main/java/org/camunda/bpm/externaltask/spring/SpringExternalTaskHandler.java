@@ -101,5 +101,15 @@ public class SpringExternalTaskHandler extends org.camunda.bpm.externaltask.Exte
         super.onTaskEvent(processDefinitionKey, bpmnElement);
         
     }
+
+    @Override
+    public void setDefaultLockTimeout(long lockTimeout) {
+        this.defaultLockTimeout = lockTimeout;
+    }
+    
+    @Override
+    public void setWorkerId(String workerId) {
+        this.workerId = workerId;
+    }
     
 }
