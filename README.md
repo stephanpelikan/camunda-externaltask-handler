@@ -39,7 +39,7 @@ External tasks need to be locked. So processing should not take more time than t
 
 ### Backkoff retry handling
 
-The external task retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for backoff retry behavior (see Javadoc of RetryableException).
+The external task retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for backoff retry behavior (see Javadoc of [RetryableException](./externaltask-handler-spi/src/main/java/org/camunda/bpm/externaltask/spi/RetryableException.java)).
 
 ```java
   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
@@ -75,7 +75,7 @@ private void init() {
 
 Asynchronous and scheduled task processing musted be configured properly. 
 
-Find the class `org.camunda.bpm.externaltask.spring.AsyncConfiguration` in `src/test/java` as an example how this can be achieved.
+Find the class [org.camunda.bpm.externaltask.spring.AsyncConfiguration](./spring-externaltask-handler/src/test/java/org/camunda/bpm/externaltask/spring/AsyncConfiguration.java) in `src/test/java` as an example how this can be achieved.
 
 ### Lock timeout
 
@@ -83,7 +83,7 @@ The default lock timeout can be configured using the property `camunda.bpm.exter
 
 ### Testing
 
-There is a integration test `spring-externaltask-handler/src/test/java:org.camunda.bpm.externaltask.spring.SpringExternalTaskHandlerIT`. It tests the Spring integration and the entire functionality of the ExternalTaskHandler.
+There is a [integration test](./spring-externaltask-handler/src/test/java/org/camunda/bpm/externaltask/spring/SpringExternalTaskHandlerIT.java) which tests the Spring integration and the entire functionality of the ExternalTaskHandler.
 
 ## EJB
 
@@ -110,9 +110,7 @@ private void init() {
 
 ### Preconditions
 
-To configure the default lock timeout and the worker id you have to provide a CDI implemenation of the interface `org.camunda.bpm.externaltask.cdi.ExternalTaskHandlerConfigrator`. It can be used to get load those values externally e.g. from a configuration file or a system property.
-
-For an example see `ejb-externaltask-testwebapp/src/main/java:org.camunda.bpm.externaltask.MyCdiExternalTaskConfigurator`
+To configure the default lock timeout and the worker id you have to provide a CDI implemenation of the interface [org.camunda.bpm.externaltask.cdi.ExternalTaskHandlerConfigrator](./ejb-externaltask-handler/src/main/java/org/camunda/bpm/externaltask/cdi/ExternalTaskHandlerConfigrator.java). It can be used to get load those values externally e.g. from a configuration file or a system property. For an example see [MyCdiExternalTaskConfigurator](./ejb-externaltask-testwebapp/src/main/java/org/camunda/bpm/externaltask/MyCdiExternalTaskConfigurator.java).
 
 ### Testing
 
