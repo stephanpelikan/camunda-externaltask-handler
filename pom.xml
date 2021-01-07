@@ -23,7 +23,9 @@
 
 	<modules>
 		<module>externaltask-handler</module>
+		<module>cdi-externaltask-handler</module>
 		<module>spring-externaltask-handler</module>
+		<module>externaltask-handler-spi</module>
 	</modules>
 
 	<build>

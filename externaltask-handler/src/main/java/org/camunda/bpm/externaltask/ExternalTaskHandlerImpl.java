@@ -10,55 +10,17 @@ import java.util.Map;
 
 import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.delegate.BpmnError;
-import org.camunda.bpm.engine.delegate.DelegateExecution;
-import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.camunda.bpm.externaltask.spi.BpmnErrorWithVariables;
+import org.camunda.bpm.externaltask.spi.ExternalTaskHandler;
+import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerProcessor;
+import org.camunda.bpm.externaltask.spi.RetryableException;
 import org.camunda.bpm.model.bpmn.instance.BusinessRuleTask;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.model.bpmn.instance.MessageEventDefinition;
 import org.camunda.bpm.model.bpmn.instance.SendTask;
 import org.camunda.bpm.model.bpmn.instance.ServiceTask;
 
-/**
- * <p>
- * A service which uses Camunda's external task implementation for
- * proper error handling.
- * <p>
- * Usage:
- * <pre>
- *   @PostConstruct
- *   private void init() {
- *      // variant 1:
- *      externalTaskHandler.registerExternalTaskProcessor("myprocess", "mytopic1", this::processServiceTask1); 
- *      // variant 2:
- *      externalTaskHandler.registerExternalTaskProcessor("myprocess", "mytopic2",
- *          ((processInstanceId, activityId, executionId, variables) -> processServiceTask2(variables))); 
- *   }
- *   
- *   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
- *          Map<String, Object> variables) throws BpmnError, RetryableException, Exception{
- *   }
- *
- *   private Map<String, Object> processServiceTask2(variables) {
- *     final var somOrderId = variables.get("somOrderId");
- *     final var result = doWhatever(somOrderId);
- *     return Map.of("whatever", result);
- *   }
- * </pre>
- * See {@link ExternalTaskHandlerProcessor} for details of how to treat errors.
- * <p>
- * There are various methods for processor registration having different capabilities:
- * <ul>
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, Long)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, boolean)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, boolean, Long)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, String, String...)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerProcessor, Long, String, String...)
- * </ul>
- * 
- * @author Stephan Pelikan
- */
-public abstract class ExternalTaskHandler {
+public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
     
     protected abstract long getDefaultLockTimeout();
 
@@ -70,7 +32,7 @@ public abstract class ExternalTaskHandler {
     
     protected abstract void processAsynchronously(Runnable action);
     
-    protected abstract void schedule(long timeout, Runnable action);
+    protected abstract void scheduleFetchAndLockExternalTasks(long timeout, String key);
     
     protected Map<String, Long> customTimeouts = new HashMap<>();
 
@@ -78,101 +40,31 @@ public abstract class ExternalTaskHandler {
 
     protected Map<String, List<String>> variablesToBeFetch = new HashMap<>();
 
-    /**
-     * Register processor for a certain process definition and a specific topic.
-     * <ul>
-     * <li>All process variables will be fetched and supplied on execution</li>
-     * <li>The default lock timeout will be uses (1 minute or Spring
-     * property &quot;application.external-task-handler.lock-timeout&quot;)</li>
-     * </ul>
-     * 
-     * @param processDefinitionKey
-     * @param topic
-     * @param processor
-     * 
-     * @see ExternalTaskHandlerProcessor#apply(String, String, String, Map)
-     */
+    @Override
     public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerProcessor processor) {
         registerExternalTaskProcessor(processDefinitionKey, topic, processor, (Long) null, false, null);
     }
 
-    /**
-     * Register processor for a certain process definition and a specific topic.
-     * <ul>
-     * <li>All process variables will be fetched and supplied on execution according to the param &quot;fetchNoVariables&quot;</li>
-     * <li>The default lock timeout will be uses (1 minute or Spring
-     * property &quot;application.external-task-handler.lock-timeout&quot;)</li>
-     * </ul>
-     * 
-     * @param processDefinitionKey
-     * @param topic
-     * @param processor
-     * @param fetchNoVariables
-     * 
-     * @see ExternalTaskHandlerProcessor#apply(String, String, String, Map)
-     */
+    @Override
     public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerProcessor processor, final boolean fetchNoVariables) {
         registerExternalTaskProcessor(processDefinitionKey, topic, processor, (Long) null, fetchNoVariables, null);
     }
 
-    /**
-     * Register processor for a certain process definition and a specific topic.
-     * <ul>
-     * <li>All process variables will be fetched and supplied on execution</li>
-     * <li>The lock timeout according to the param &quot;lockTimeout&quot; will be used</li>
-     * </ul>
-     * 
-     * @param processDefinitionKey
-     * @param topic
-     * @param processor
-     * @param lockTimeout
-     * 
-     * @see ExternalTaskHandlerProcessor#apply(String, String, String, Map)
-     */
+    @Override
     public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerProcessor processor, final Long lockTimeout) {
         registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout, false, null);
     }
 
-    /**
-     * Register processor for a certain process definition and a specific topic.
-     * <ul>
-     * <li>All process variables will be fetched and supplied on execution according to the param &quot;fetchNoVariables&quot;</li>
-     * <li>The lock timeout according to the param &quot;lockTimeout&quot; will be used</li>
-     * </ul>
-     * 
-     * @param processDefinitionKey
-     * @param topic
-     * @param processor
-     * @param fetchNoVariables
-     * @param lockTimeout
-     * 
-     * @see ExternalTaskHandlerProcessor#apply(String, String, String, Map)
-     */
+    @Override
     public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerProcessor processor, final boolean fetchNoVariables, final Long lockTimeout) {
         registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout, fetchNoVariables, null);
     }
 
-    /**
-     * Register processor for a certain process definition and a specific topic.
-     * <ul>
-     * <li>The process variables according to the params &quot;firstVariableToFetch&quot; and
-     * &quot; variablesToFetch&quot; will be fetched and supplied on execution</li>
-     * <li>The default lock timeout will be uses (1 minute or Spring
-     * property &quot;application.external-task-handler.lock-timeout&quot;)</li>
-     * </ul>
-     * 
-     * @param processDefinitionKey
-     * @param topic
-     * @param processor
-     * @param firstVariableToFetch
-     * @param variablesToFetch
-     * 
-     * @see ExternalTaskHandlerProcessor#apply(String, String, String, Map)
-     */
+    @Override
     public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerProcessor processor, final String firstVariableToFetch,
             final String... variablesToFetch) {
@@ -184,23 +76,7 @@ public abstract class ExternalTaskHandler {
         registerExternalTaskProcessor(processDefinitionKey, topic, processor, null, false, variableNames);
     }
 
-    /**
-     * Register processor for a certain process definition and a specific topic.
-     * <ul>
-     * <li>The process variables according to the params &quot;firstVariableToFetch&quot; and
-     * &quot; variablesToFetch&quot; will be fetched and supplied on execution</li>
-     * <li>The lock timeout according to the param &quot;lockTimeout&quot; will be used</li>
-     * </ul>
-     * 
-     * @param processDefinitionKey
-     * @param topic
-     * @param processor
-     * @param lockTimeout
-     * @param firstVariableToFetch
-     * @param variablesToFetch
-     * 
-     * @see ExternalTaskHandlerProcessor#apply(String, String, String, Map)
-     */
+    @Override
     public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerProcessor processor, final Long lockTimeout,
             final String firstVariableToFetch, final String... variablesToFetch) {
@@ -239,14 +115,14 @@ public abstract class ExternalTaskHandler {
      * 
      * @param execution Camunda's delegate execution
      */
-    protected void onTaskEvent(final DelegateExecution execution) {
+    protected void onTaskEvent(final String processDefinitionKey, final FlowElement bpmnElement) {
 
-        final String topic = getTopic(execution);
+        final String topic = getTopic(bpmnElement);
         if (topic == null) {
             return; // an activity which has not an external task implementation
         }
 
-        final String key = getInternalKey(execution, topic);
+        final String key = getInternalKey(processDefinitionKey, topic);
         if (!processors.containsKey(key)) {
             return; // a topic not yet registered
         }
@@ -304,7 +180,7 @@ public abstract class ExternalTaskHandler {
             getExternalTaskService().handleFailure(externalTaskId, workerId,
                     e.getMessage(), buildIncidentDetails(e), e.getRetries(), e.getRetryTimeout());
             if (e.getRetries() > 0) {
-                doAfterTransaction(() -> schedule(e.getRetryTimeout(), () -> fetchAndLockExternalTasks(key)));
+                doAfterTransaction(() -> scheduleFetchAndLockExternalTasks(e.getRetryTimeout(), key));
             }
         } catch (Exception e) {
             getExternalTaskService().handleFailure(externalTaskId, workerId,
@@ -318,10 +194,6 @@ public abstract class ExternalTaskHandler {
         return customTimeouts.getOrDefault(key, getDefaultLockTimeout()).longValue();
     }
     
-    private static String getInternalKey(final DelegateExecution execution, final String topic) {
-        return getInternalKey(((ExecutionEntity) execution).getProcessDefinition().getKey(), topic);
-    }
-
     private static String getInternalKey(final String processDefinitionKey, final String topic) {
         return processDefinitionKey + "#" + topic;
     }
@@ -343,9 +215,7 @@ public abstract class ExternalTaskHandler {
         
     }
 
-    static String getTopic(final DelegateExecution execution) {
-
-        final FlowElement bpmnElement = execution.getBpmnModelElementInstance();
+    static String getTopic(final FlowElement bpmnElement) {
 
         if (bpmnElement instanceof ServiceTask) {
             return ((ServiceTask) bpmnElement).getCamundaTopic();

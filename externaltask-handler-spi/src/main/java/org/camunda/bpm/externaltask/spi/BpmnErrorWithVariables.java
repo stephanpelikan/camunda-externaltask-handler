@@ -1,4 +1,4 @@
-package org.camunda.bpm.externaltask;
+package org.camunda.bpm.externaltask.spi;
 
 import java.util.Map;
 

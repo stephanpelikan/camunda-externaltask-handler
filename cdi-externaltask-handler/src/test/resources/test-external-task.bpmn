@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0c2j6f0" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.1.1">
+  <bpmn:process id="ExternalTaskProcess" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="IT started">
+      <bpmn:outgoing>Flow_0hn49kw</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0hn49kw" sourceRef="StartEvent_1" targetRef="TestService" />
+    <bpmn:endEvent id="Event_0sr88hm" name="IT ended">
+      <bpmn:incoming>Flow_0m1n1to</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0m1n1to" sourceRef="TestService" targetRef="Event_0sr88hm" />
+    <bpmn:serviceTask id="TestService" name="process external task" camunda:type="external" camunda:topic="TestTopic">
+      <bpmn:incoming>Flow_0hn49kw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0m1n1to</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Event_0al4im0" name="expected error occured" attachedToRef="TestService">
+      <bpmn:outgoing>Flow_1v8l5mz</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_02nz1hm" camunda:errorCodeVariable="error" camunda:errorMessageVariable="error" />
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="Event_0mopwo7" name="IT ended with error">
+      <bpmn:incoming>Flow_1v8l5mz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1v8l5mz" sourceRef="Event_0al4im0" targetRef="Event_0mopwo7" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ExternalTaskProcess">
+      <bpmndi:BPMNEdge id="Flow_0hn49kw_di" bpmnElement="Flow_0hn49kw">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m1n1to_di" bpmnElement="Flow_0m1n1to">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1v8l5mz_di" bpmnElement="Flow_1v8l5mz">
+        <di:waypoint x="370" y="175" />
+        <di:waypoint x="370" y="240" />
+        <di:waypoint x="432" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="173" y="142" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0sr88hm_di" bpmnElement="Event_0sr88hm">
+        <dc:Bounds x="432" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="428" y="142" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1kzlb3f_di" bpmnElement="TestService">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0mopwo7_di" bpmnElement="Event_0mopwo7">
+        <dc:Bounds x="432" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="417" y="265" width="67" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_04cf5zl_di" bpmnElement="Event_0al4im0">
+        <dc:Bounds x="352" y="139" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="374" y="173" width="72" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

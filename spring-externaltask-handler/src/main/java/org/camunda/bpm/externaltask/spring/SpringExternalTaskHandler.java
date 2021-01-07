@@ -2,6 +2,8 @@ package org.camunda.bpm.externaltask.spring;
 
 import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +16,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
-public class ExternalTaskHandler extends org.camunda.bpm.externaltask.ExternalTaskHandler {
+public class SpringExternalTaskHandler extends org.camunda.bpm.externaltask.ExternalTaskHandlerImpl {
 
     @Value("${camunda.bpm.externaltask-handler.default-locktimeout:60000}")
     private long defaultLockTimeout;
@@ -84,17 +86,19 @@ public class ExternalTaskHandler extends org.camunda.bpm.externaltask.ExternalTa
     }
     
     @Override
-    protected void schedule(long timeout, Runnable action) {
+    protected void scheduleFetchAndLockExternalTasks(long timeout, String key) {
         
-        helper.schedule(timeout, action);
+        helper.schedule(timeout, () -> super.fetchAndLockExternalTasks(key));
         
     }
     
     @EventListener(condition = "#execution.eventName == 'start'")
-    @Override
     protected void onTaskEvent(DelegateExecution execution) {
         
-        super.onTaskEvent(execution);
+        final FlowElement bpmnElement = execution.getBpmnModelElementInstance();
+        final String processDefinitionKey = ((ExecutionEntity) execution).getProcessDefinition().getKey();
+
+        super.onTaskEvent(processDefinitionKey, bpmnElement);
         
     }
     

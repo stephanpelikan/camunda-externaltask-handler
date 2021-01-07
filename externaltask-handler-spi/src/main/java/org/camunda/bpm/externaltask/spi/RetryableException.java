@@ -1,4 +1,4 @@
-package org.camunda.bpm.externaltask;
+package org.camunda.bpm.externaltask.spi;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.List;
  * <p>
  * Provide:
  * <ul>
- * <li><i>maxAttempts:</i> The total number of attempts</li>
+ * <li><i>maxRetries:</i> The total number of retries</li>
  * <li><i>retries:</i> The current &quot;retries&quot; value given by {@link ExternalTaskHandlerProcessor#apply(String, String, String, java.util.Map, Integer)}</li>
  * <li><i>retryTimeouts:</i> A sequence of timeouts used for each attempt. If more attempts are configured than retry values available then the last retry timeout will be used for those attempts.</li>
  * <li><i>retryTimeout:</i> A timeout used for each attempt</li>
@@ -33,64 +33,64 @@ public class RetryableException extends Exception {
     
     private int nextRetries;
  
-    public RetryableException(int maxAttempts, Integer retries, List<Long> retryTimeouts) {
+    public RetryableException(int maxRetries, Integer retries, List<Long> retryTimeouts) {
         super();
-        initialize(maxAttempts, retries, retryTimeouts);
+        initialize(maxRetries, retries, retryTimeouts);
     }
 
-    public RetryableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, int maxAttempts, Integer retries, List<Long> retryTimeouts) {
+    public RetryableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, int maxRetries, Integer retries, List<Long> retryTimeouts) {
         super(message, cause, enableSuppression, writableStackTrace);
-        initialize(maxAttempts, retries, retryTimeouts);
+        initialize(maxRetries, retries, retryTimeouts);
     }
 
-    public RetryableException(String message, Throwable cause, int maxAttempts, Integer retries, List<Long> retryTimeouts) {
+    public RetryableException(String message, Throwable cause, int maxRetries, Integer retries, List<Long> retryTimeouts) {
         super(message, cause);
-        initialize(maxAttempts, retries, retryTimeouts);
+        initialize(maxRetries, retries, retryTimeouts);
     }
 
-    public RetryableException(String message, int maxAttempts, Integer retries, List<Long> retryTimeouts) {
+    public RetryableException(String message, int maxRetries, Integer retries, List<Long> retryTimeouts) {
         super(message);
-        initialize(maxAttempts, retries, retryTimeouts);
+        initialize(maxRetries, retries, retryTimeouts);
     }
 
-    public RetryableException(Throwable cause, int maxAttempts, Integer retries, List<Long> retryTimeouts) {
+    public RetryableException(Throwable cause, int maxRetries, Integer retries, List<Long> retryTimeouts) {
         super(cause);
-        initialize(maxAttempts, retries, retryTimeouts);
+        initialize(maxRetries, retries, retryTimeouts);
     }
 
-    public RetryableException(int maxAttempts, Integer retries, Long retryTimeout) {
+    public RetryableException(int maxRetries, Integer retries, Long retryTimeout) {
         super();
         final List<Long> timeouts = new LinkedList<>();
         timeouts.add(retryTimeout);
-        initialize(maxAttempts, retries, timeouts);
+        initialize(maxRetries, retries, timeouts);
     }
 
-    public RetryableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, int maxAttempts, Integer retries, Long retryTimeout) {
+    public RetryableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, int maxRetries, Integer retries, Long retryTimeout) {
         super(message, cause, enableSuppression, writableStackTrace);
         final List<Long> timeouts = new LinkedList<>();
         timeouts.add(retryTimeout);
-        initialize(maxAttempts, retries, timeouts);
+        initialize(maxRetries, retries, timeouts);
     }
 
-    public RetryableException(String message, Throwable cause, int maxAttempts, Integer retries, Long retryTimeout) {
+    public RetryableException(String message, Throwable cause, int maxRetries, Integer retries, Long retryTimeout) {
         super(message, cause);
         final List<Long> timeouts = new LinkedList<>();
         timeouts.add(retryTimeout);
-        initialize(maxAttempts, retries, timeouts);
+        initialize(maxRetries, retries, timeouts);
     }
 
-    public RetryableException(String message, int maxAttempts, Integer retries, Long retryTimeout) {
+    public RetryableException(String message, int maxRetries, Integer retries, Long retryTimeout) {
         super(message);
         final List<Long> timeouts = new LinkedList<>();
         timeouts.add(retryTimeout);
-        initialize(maxAttempts, retries, timeouts);
+        initialize(maxRetries, retries, timeouts);
     }
 
-    public RetryableException(Throwable cause, int maxAttempts, Integer retries, Long retryTimeout) {
+    public RetryableException(Throwable cause, int maxRetries, Integer retries, Long retryTimeout) {
         super(cause);
         final List<Long> timeouts = new LinkedList<>();
         timeouts.add(retryTimeout);
-        initialize(maxAttempts, retries, timeouts);
+        initialize(maxRetries, retries, timeouts);
     }
     
     public long getRetryTimeout() {
@@ -101,7 +101,7 @@ public class RetryableException extends Exception {
         return nextRetries;
     }
 
-    private void initialize(int maxAttempts, Integer retries, List<Long> retryTimeouts) {
+    private void initialize(int maxRetries, Integer retries, List<Long> retryTimeouts) {
         
         final List<Long> timeouts;
         if ((retryTimeouts == null)
@@ -111,6 +111,7 @@ public class RetryableException extends Exception {
             timeouts = retryTimeouts;
         }
         
+        final int maxAttempts = maxRetries + 1;
         final int attempt;
         if (retries == null) {
             attempt = 1;

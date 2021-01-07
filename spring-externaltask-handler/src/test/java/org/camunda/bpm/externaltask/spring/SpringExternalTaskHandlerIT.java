@@ -15,8 +15,9 @@ import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.runtime.Incident;
-import org.camunda.bpm.externaltask.BpmnErrorWithVariables;
-import org.camunda.bpm.externaltask.RetryableException;
+import org.camunda.bpm.externaltask.spi.BpmnErrorWithVariables;
+import org.camunda.bpm.externaltask.spi.ExternalTaskHandler;
+import org.camunda.bpm.externaltask.spi.RetryableException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +34,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 @ActiveProfiles("test")
 @Import({ AsyncConfiguration.class })
-public class ExternalTaskHandlerIT {
+public class SpringExternalTaskHandlerIT {
 
     private static String TESTPROCESS_DEFINITION_KEY = "ExternalTaskProcess";
 
@@ -362,7 +363,7 @@ public class ExternalTaskHandlerIT {
             result.notify();
         }
         
-        throw new RetryableException("failed with incident", 3, retries, TEST_TIMEOUTS);
+        throw new RetryableException("failed with incident", 2, retries, TEST_TIMEOUTS);
         
     }
     
