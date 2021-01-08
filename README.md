@@ -44,7 +44,14 @@ The external task retry counter is provided which has to be passed to the Retrya
 ```java
   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
          Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception {
-    throw new RetryableException("failed", 5, retries, List.of(5000l, 60000l)); // retry after 5 seconds and afterwards every minute, all together 5 times
+    try {
+      doRemoteCall();
+    } catch (Exception e) {
+      // retry after 5 seconds and afterwards every minute, all together 4 times.
+       // if all 5 attempts fail an incident is created
+      throw new RetryableException("remote call failed", e,
+          4, retries, List.of(5000l, 60000l));
+    }
   }
 ```
 
@@ -110,7 +117,7 @@ private void init() {
 
 ### Preconditions
 
-To configure the default lock timeout and the worker id you have to provide a CDI implemenation of the interface [org.camunda.bpm.externaltask.cdi.ExternalTaskHandlerConfigrator](./ejb-externaltask-handler/src/main/java/org/camunda/bpm/externaltask/cdi/ExternalTaskHandlerConfigrator.java). It can be used to get load those values externally e.g. from a configuration file or a system property. For an example see [MyCdiExternalTaskConfigurator](./ejb-externaltask-testwebapp/src/main/java/org/camunda/bpm/externaltask/MyCdiExternalTaskConfigurator.java).
+To configure the default lock timeout and the worker id you have to provide a CDI implemenation of the interface [org.camunda.bpm.externaltask.cdi.ExternalTaskHandlerConfigurator](./ejb-externaltask-handler/src/main/java/org/camunda/bpm/externaltask/cdi/ExternalTaskHandlerConfigurator.java). It can be used to load those values externally e.g. from a configuration file or a system property. For an example see [MyCdiExternalTaskConfigurator](./ejb-externaltask-testwebapp/src/main/java/org/camunda/bpm/externaltask/MyCdiExternalTaskConfigurator.java).
 
 ### Testing
 

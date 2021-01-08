@@ -48,7 +48,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     private CdiExternalTaskHandlerHelper helper;
     
     @Inject
-    private ExternalTaskHandlerConfigrator configurator;
+    private ExternalTaskHandlerConfigurator configurator;
     
     @PostConstruct
     private void configure() {
