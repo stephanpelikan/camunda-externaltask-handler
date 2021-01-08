@@ -17,9 +17,9 @@ This library provides the ExternalTaskHandler bean which can be used for local i
     // do something or throw exception for incident
   }
 
-  private Map<String, Object> processServiceTask2(variables) {
-    final var somOrderId = variables.get("somOrderId");
-    final var result = doWhatever(somOrderId);
+  private Map<String, Object> processServiceTask2(Map<String, Object> variables) {
+    final var orderId = variables.get("orderId");
+    final var result = doWhatever(orderId);
     return Map.of("whatever", result);
   }
 ```
@@ -37,14 +37,14 @@ A processor method for a certain process definition and a specific topic has to 
 
 External tasks need to be locked. So processing should not take more time than the lock timeout. The default timeout is a minute. If the lock timeout expires (for example due to system failures) then the task will be retried in an one minute interval. A non standard lock timeout can be defined on method regristration.
 
-### Backkoff retry handling
+### Exponential backk-off retry handling
 
-The external task retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for backoff retry behavior (see Javadoc of [RetryableException](./externaltask-handler-spi/src/main/java/org/camunda/bpm/externaltask/spi/RetryableException.java)).
+The external task retry counter is provided which has to be passed to the RetryableException to use the retry mechanism. The exception's constructor takes the configuration values for exponential back-off retry behavior (see Javadoc of [RetryableException](./externaltask-handler-spi/src/main/java/org/camunda/bpm/externaltask/spi/RetryableException.java)).
 
 ```java
   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
          Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception {
-    throw new RetryableException("failed", 5, retries, List.of(5000l, 60000l)); // retry after 5 seconds and afterwards after 1 minute
+    throw new RetryableException("failed", 5, retries, List.of(5000l, 60000l)); // retry after 5 seconds and afterwards every minute, all together 5 times
   }
 ```
 
