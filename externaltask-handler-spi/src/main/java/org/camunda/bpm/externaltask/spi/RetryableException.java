@@ -9,12 +9,12 @@ import java.util.List;
  * Provide:
  * <ul>
  * <li><i>maxRetries:</i> The total number of retries</li>
- * <li><i>retries:</i> The current &quot;retries&quot; value given by {@link ExternalTaskHandlerProcessor#apply(String, String, String, java.util.Map, Integer)}</li>
+ * <li><i>retries:</i> The current &quot;retries&quot; value given by {@link ExternalTaskHandlerSyncProcessor#apply(String, String, String, java.util.Map, Integer)}</li>
  * <li><i>retryTimeouts:</i> A sequence of timeouts used for each attempt. If more attempts are configured than retry values available then the last retry timeout will be used for those attempts.</li>
  * <li><i>retryTimeout:</i> A timeout used for each attempt</li>
  * </ul>
  * 
- * @see ExternalTaskHandlerProcessor
+ * @see ExternalTaskHandlerSyncProcessor
  */
 public class RetryableException extends Exception {
 

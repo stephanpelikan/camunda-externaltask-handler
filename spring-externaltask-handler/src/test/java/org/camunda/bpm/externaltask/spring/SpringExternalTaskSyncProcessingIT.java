@@ -27,6 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.Order;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -34,7 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest
 @ActiveProfiles("test")
 @Import({ AsyncConfiguration.class })
-public class SpringExternalTaskHandlerIT {
+public class SpringExternalTaskSyncProcessingIT {
 
     private static String TESTPROCESS_DEFINITION_KEY = "ExternalTaskProcess";
 
@@ -69,11 +70,13 @@ public class SpringExternalTaskHandlerIT {
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
                         (processInstanceId, activityId, executionId, variables, retries) -> setVariableProcessor(processorCalled, processInstanceId, variables));
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(50000);
             } catch (InterruptedException e) {
@@ -125,11 +128,13 @@ public class SpringExternalTaskHandlerIT {
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
                         (processInstanceId, activityId, executionId, variables, retries) -> throwBpmnErrorProcessor(processorCalled, processInstanceId, variables));
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -181,11 +186,13 @@ public class SpringExternalTaskHandlerIT {
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
                         (processInstanceId, activityId, executionId, variables, retries) -> throwBpmnErrorWithVariablesProcessor(processorCalled, processInstanceId, variables));
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -237,11 +244,13 @@ public class SpringExternalTaskHandlerIT {
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
                         (processInstanceId, activityId, executionId, variables, retries) -> throwExceptionProcessor(processorCalled, processInstanceId, variables, retries));
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -302,11 +311,13 @@ public class SpringExternalTaskHandlerIT {
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
                         (processInstanceId, activityId, executionId, variables, retries) -> throwRetryableExceptionProcessor(processorCalled, processInstanceId, variables, retries));
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(500);
             } catch (InterruptedException e) {
@@ -376,11 +387,13 @@ public class SpringExternalTaskHandlerIT {
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
                         (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables));
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -420,11 +433,13 @@ public class SpringExternalTaskHandlerIT {
                         (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables),
                         true);
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -464,11 +479,13 @@ public class SpringExternalTaskHandlerIT {
                         (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables),
                         "initA");
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -508,11 +525,13 @@ public class SpringExternalTaskHandlerIT {
                         (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables),
                         "initA", "initB");
 
-        final String processInstanceId = runtimeService
-                .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
-                .getProcessInstanceId();
+        String processInstanceId = null;
         
         synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY, variables("initA", "A", "initB", "B"))
+                    .getProcessInstanceId();
+
             try {
                 processorCalled.wait(5000);
             } catch (InterruptedException e) {
@@ -563,6 +582,7 @@ public class SpringExternalTaskHandlerIT {
     }
     
     @TestConfiguration
+    @Order(0)
     static class TestCamundaApplicationConfiguration {
         
         @Bean(name = "workerId")
@@ -572,7 +592,7 @@ public class SpringExternalTaskHandlerIT {
         
     }
     
-    private Map<String, Object> variables(String... variables) {
+    public static Map<String, Object> variables(String... variables) {
         
         final Map<String, Object> result = new HashMap<>();
         for (int i = 0; i < variables.length; i += 2) {

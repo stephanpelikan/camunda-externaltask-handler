@@ -7,7 +7,9 @@ import javax.ejb.LockType;
 import javax.ejb.Singleton;
 
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandler;
-import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerProcessor;
+import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerAsyncRequestProcessor;
+import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerAsyncResponseProcessor;
+import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerSyncProcessor;
 
 /**
  * We need a separate SPI bean because otherwise we could not hide all internal
@@ -23,31 +25,31 @@ public class CdiExternalTaskHandlerSpi implements ExternalTaskHandler {
 
     @Override
     public void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerProcessor processor) {
+            ExternalTaskHandlerSyncProcessor processor) {
         delegate.registerExternalTaskProcessor(processDefinitionKey, topic, processor);
     }
 
     @Override
     public void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerProcessor processor, boolean fetchNoVariables) {
+            ExternalTaskHandlerSyncProcessor processor, boolean fetchNoVariables) {
         delegate.registerExternalTaskProcessor(processDefinitionKey, topic, processor, fetchNoVariables);
     }
 
     @Override
     public void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerProcessor processor, Long lockTimeout) {
+            ExternalTaskHandlerSyncProcessor processor, Long lockTimeout) {
         delegate.registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout);
     }
 
     @Override
     public void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerProcessor processor, boolean fetchNoVariables, Long lockTimeout) {
+            ExternalTaskHandlerSyncProcessor processor, boolean fetchNoVariables, Long lockTimeout) {
         delegate.registerExternalTaskProcessor(processDefinitionKey, topic, processor, fetchNoVariables, lockTimeout);
     }
 
     @Override
     public void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerProcessor processor, String firstVariableToFetch, String... variablesToFetch) {
+            ExternalTaskHandlerSyncProcessor processor, String firstVariableToFetch, String... variablesToFetch) {
         delegate
                 .registerExternalTaskProcessor(processDefinitionKey, topic, processor, firstVariableToFetch,
                         variablesToFetch);
@@ -55,11 +57,90 @@ public class CdiExternalTaskHandlerSpi implements ExternalTaskHandler {
 
     @Override
     public void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerProcessor processor, Long lockTimeout, String firstVariableToFetch,
+            ExternalTaskHandlerSyncProcessor processor, Long lockTimeout, String firstVariableToFetch,
             String... variablesToFetch) {
         delegate
                 .registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout,
                         firstVariableToFetch, variablesToFetch);
+    }
+
+    @Override
+    public <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor) {
+        delegate.registerExternalTaskProcessor(processDefinitionKey, topic, requestProcessor, responseProcessor);
+    }
+
+    @Override
+    public <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, boolean fetchNoVariables) {
+        delegate
+                .registerExternalTaskProcessor(processDefinitionKey,
+                        topic,
+                        requestProcessor,
+                        responseProcessor,
+                        fetchNoVariables);
+    }
+
+    @Override
+    public <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, boolean fetchNoVariables,
+            Long lockTimeout) {
+        delegate
+                .registerExternalTaskProcessor(processDefinitionKey,
+                        topic,
+                        requestProcessor,
+                        responseProcessor,
+                        fetchNoVariables,
+                        lockTimeout);
+    }
+
+    @Override
+    public <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, Long lockTimeout) {
+        delegate
+                .registerExternalTaskProcessor(processDefinitionKey,
+                        topic,
+                        requestProcessor,
+                        responseProcessor,
+                        lockTimeout);
+    }
+
+    @Override
+    public <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, String firstVariableToFetch,
+            String... variablesToFetch) {
+        delegate
+                .registerExternalTaskProcessor(processDefinitionKey,
+                        topic,
+                        requestProcessor,
+                        responseProcessor,
+                        firstVariableToFetch,
+                        variablesToFetch);
+    }
+
+    @Override
+    public <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, Long lockTimeout,
+            String firstVariableToFetch, String... variablesToFetch) {
+        delegate
+                .registerExternalTaskProcessor(processDefinitionKey,
+                        topic,
+                        requestProcessor,
+                        responseProcessor,
+                        lockTimeout,
+                        firstVariableToFetch,
+                        variablesToFetch);
+    }
+
+    @Override
+    public <R, I> R handleAsyncInput(String correlationId, I input) throws Exception {
+        return delegate.handleAsyncInput(correlationId, input);
     }
 
     @Override
