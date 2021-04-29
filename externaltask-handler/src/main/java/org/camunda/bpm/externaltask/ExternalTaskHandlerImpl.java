@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.camunda.bpm.engine.ExternalTaskService;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.externaltask.ExternalTask;
 import org.camunda.bpm.engine.externaltask.LockedExternalTask;
@@ -26,12 +27,18 @@ import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.model.bpmn.instance.MessageEventDefinition;
 import org.camunda.bpm.model.bpmn.instance.SendTask;
 import org.camunda.bpm.model.bpmn.instance.ServiceTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
-    
+
+    private static Logger logger = LoggerFactory.getLogger(ExternalTaskHandlerImpl.class);
+
     protected abstract long getDefaultLockTimeout();
 
     protected abstract ExternalTaskService getExternalTaskService();
+    
+    protected abstract RuntimeService getRuntimeService();
 
     protected abstract String getWorkerId();
 
@@ -392,8 +399,24 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         try {
             getExternalTaskService().complete(correlationId, getWorkerId(), variablesToBeSet);
         } catch (Exception e) {
-            getExternalTaskService()
-                    .handleFailure(correlationId, getWorkerId(), e.getMessage(), buildIncidentDetails(e), 0, 0);
+            logger.warn("Could not complete external task '{}' of process '{}'! Will raise an incident.",
+                    correlationId, externalTask.getProcessDefinitionKey());
+            processAsynchronously(() -> {
+                if (! variablesToBeSet.isEmpty()) {
+                    try {
+                        getRuntimeService()
+                                .setVariables(externalTask.getExecutionId(), variablesToBeSet);
+                    } catch (Exception ie) {
+                        logger.warn("Could not set variables and their values might be lost! {}", variablesToBeSet, ie);
+                    }
+                }
+                try {
+                    getExternalTaskService()
+                            .handleFailure(correlationId, getWorkerId(), e.getMessage(), buildIncidentDetails(e), 0, 0);
+                } catch (Exception ie) {
+                    logger.warn("Could not build incident", ie);
+                }
+            });
         }
 
         return result;
