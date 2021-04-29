@@ -20,6 +20,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 
 import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.RepositoryService;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.cdi.BusinessProcessEvent;
 import org.camunda.bpm.engine.cdi.BusinessProcessEventType;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
@@ -34,6 +35,9 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     
     @Inject
     private ExternalTaskService externalTaskService;
+
+    @Inject
+    private RuntimeService runtimeService;
 
     @Inject
     private RepositoryService repositoryService;
@@ -82,6 +86,11 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
         return externalTaskService;
     }
     
+    @Override
+    protected RuntimeService getRuntimeService() {
+        return runtimeService;
+    }
+
     @Schedule(second = "0", minute = "*", hour = "*", persistent = false)
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void fetchAndLockExternalTasks() {

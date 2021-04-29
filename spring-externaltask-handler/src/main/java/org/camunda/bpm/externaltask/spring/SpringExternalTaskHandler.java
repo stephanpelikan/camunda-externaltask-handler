@@ -1,6 +1,7 @@
 package org.camunda.bpm.externaltask.spring;
 
 import org.camunda.bpm.engine.ExternalTaskService;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
@@ -29,6 +30,9 @@ public class SpringExternalTaskHandler extends org.camunda.bpm.externaltask.Exte
     private ExternalTaskService externalTaskService;
     
     @Autowired
+    private RuntimeService runtimeService;
+
+    @Autowired
     private ExternalTaskHandlerHelper helper;
     
     @Autowired
@@ -44,6 +48,11 @@ public class SpringExternalTaskHandler extends org.camunda.bpm.externaltask.Exte
         return externalTaskService;
     }
     
+    @Override
+    protected RuntimeService getRuntimeService() {
+        return runtimeService;
+    }
+
     @Override
     protected String getWorkerId() {
         return workerId;
