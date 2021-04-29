@@ -2,15 +2,19 @@
 
 This library provides the ExternalTaskHandler bean which can be used for local implementation of [Camunda's external tasks ](https://docs.camunda.org/manual/7.14/user-guide/process-engine/external-tasks/) in a simplified way.
 
-*Advantages:*
-* Loose coupling since this API does not use Camunda specfic classes
+Advantages:
+* Loose coupling since this API does not use Camunda specific classes
 * Simplified API for reading and setting process variables
-* Streamlined error handling regardless of the current thread owner (application thread or job executor thread)
-* Exponential back-off retry handling which is useful for doing remote calls 
+* Streamlined error handling regardless of the current thread's owner (application thread or job executor thread)
+* Exponential back-off retry handling which is useful for doing remote calls
+* Don't block job execution thread by doing synchronous processing of activities 
+
+Disadvantages:
+* External tasks need more transactions and therefore are slower in execution. For common business processes this is not an issue.
 
 *Usage:*
 
-In Camunda modeler choose "External" as type of implementation of a certain activity. Set a unique topic name. Depending on whether you need synchronous or asynchronous processing follow the instructions of the corresponding next section to register a handler for this particular activity as part of your Java implementation.
+In Camunda modeler choose "External" as type of implementation of a certain activity. Choose a unique topic name. Depending on whether you need synchronous or asynchronous processing follow the instructions of the corresponding next section to register a handler for this particular activity (identified by it's topic name) as part of your Java implementation.
 
 ![External](readme/ExternalTask.png)
 
@@ -69,11 +73,11 @@ In this scenarios the ExternalTaskHandler can be used to do asynchronous communi
 
 Using Camunda's API one has to model asynchronous communication like this:
 
-![External](readme/CamundaAsync.png)
+![CamundaAsync](readme/CamundaAsync.png)
 
-But as this is a technical aspect of the implemenation and therefore should not be part of the BPMN. Using the ExternalTaskHandler one can use this model and hide the details of the technical implementation:
+But this is a technical aspect of the implemenation and therefore should not be part of the BPMN. Using the ExternalTaskHandler one can use model underneath hiding the details of the technical implementation:
 
-![External](readme/ExternalTaskHandlerAsync.png)
+![ExternalTaskHandlerAsync](readme/ExternalTaskHandlerAsync.png)
 
 *Usage:*
 
@@ -124,6 +128,15 @@ But as this is a technical aspect of the implemenation and therefore should not 
     return ResponseEntity.ok(resultMessage);
   }
 ```
+
+In this situations two handlers need to be registered:
+
+1. The request handler which is responsible for sending the synchronous request to a remote system
+2. The response handler which completes the BPMN activity by processing a the asynchronous response message
+
+Ad 1: A correlation id is provided which should be send to the remote system. It has to be part of the asynchronous response and is necessary to correlate the response message to a particular waiting BPMN activity. Unlike the synchronous handler this request handler has a void return value since no process variables may be set as part of sending the request. If this is necessary one has to use the Camunda API. This handler supports the same error handling strategies as the synchronous handler.
+
+Ad 2: The response handler is called once the an asynchronous response has been handed over by calling the method "handleAsyncInput". The result value of this handler is passed to the caller of the "handleAsyncInput" method and my be forwarded to the remote system waiting to complete the asynchronous remote call. Additionally, any exception thrown by the handler will be passed to the caller of the "handleAsyncInput" method and will NOT cause an incident! The handler's parameter "variablesToBeSet" can be used to set process variables on completing the BPMN activity. If upcoming processing of the workflow causes an exception and incident will be created.
 
 ## Advanced usage
 
