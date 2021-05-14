@@ -429,9 +429,11 @@ public class SpringExternalTaskSyncProcessingIT {
         final boolean[] processorCalled = new boolean[] { false };
         
         externalTaskHandler
-                .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables),
-                        true);
+                .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
+                        TESTPROCESS_TESTTOPIC,
+                        (processInstanceId, activityId, executionId, variables, retries)
+                                -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
+                .fetchNoVariables();
 
         String processInstanceId = null;
         
@@ -475,9 +477,11 @@ public class SpringExternalTaskSyncProcessingIT {
         final boolean[] processorCalled = new boolean[] { false };
         
         externalTaskHandler
-                .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables),
-                        "initA");
+                .registerExternalTaskProcessor(
+                        TESTPROCESS_DEFINITION_KEY,
+                        TESTPROCESS_TESTTOPIC, 
+                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
+                    .variablesToFetch("initA");
 
         String processInstanceId = null;
         
@@ -521,9 +525,11 @@ public class SpringExternalTaskSyncProcessingIT {
         final boolean[] processorCalled = new boolean[] { false };
         
         externalTaskHandler
-                .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables),
-                        "initA", "initB");
+                .registerExternalTaskProcessor(
+                        TESTPROCESS_DEFINITION_KEY,
+                        TESTPROCESS_TESTTOPIC, 
+                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
+                    .variablesToFetch("initA", "initB");
 
         String processInstanceId = null;
         

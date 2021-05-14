@@ -8,10 +8,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.camunda.bpm.engine.HistoryService;
+import org.camunda.bpm.engine.ManagementService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
+import org.camunda.bpm.engine.runtime.Incident;
+import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.externaltask.spi.BpmnErrorWithResult;
 import org.camunda.bpm.externaltask.spi.BpmnErrorWithVariables;
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandler;
@@ -56,6 +59,9 @@ public class SpringExternalTaskAsyncProcessingIT {
     @Autowired
     private ExternalTaskHandler externalTaskHandler;
     
+    @Autowired
+    private ManagementService managementService;
+
     @Test
     public void testExternalTaskHandling() throws Exception {
 
@@ -407,6 +413,128 @@ public class SpringExternalTaskAsyncProcessingIT {
                 .stream()
                 .collect(Collectors.toMap(HistoricVariableInstance::getName, HistoricVariableInstance::getValue));
         Assert.assertEquals("BPMN Error not processed", variables(), variablesSetByProcessor);
+
+    }
+
+    @Test
+    public void testExternalTaskAsyncResponseTimedOut() throws Exception {
+
+        final String[] processorCalled = new String[] { null, null, null };
+
+        final String asyncFeedback = "Thank you!";
+
+        externalTaskHandler
+                .<String, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
+                        TESTPROCESS_TESTTOPIC,
+                        (correlationId, processInstanceId, activityId, executionId, variables,
+                                retries) -> processRequest(processorCalled, correlationId),
+                        (processInstanceId, activityId, executionId, retries, correlationId, response,
+                                variablesToBeSet) -> setVariableProcessor(processorCalled,
+                                        correlationId,
+                                        response,
+                                        variablesToBeSet,
+                                        asyncFeedback))
+                .responseTimeout(3000l)
+                .responseTimeoutExpiredMessage("TIMEOUT");
+
+        String processInstanceId = null;
+
+        synchronized (processorCalled) {
+            processInstanceId = runtimeService
+                    .startProcessInstanceByKey(TESTPROCESS_DEFINITION_KEY)
+                    .getProcessInstanceId();
+
+            try {
+                processorCalled.wait(5000);
+            } catch (InterruptedException e) {
+                Assert.fail("Interrupted");
+            }
+        }
+
+        Assert.assertNotNull("request processor not called!", processorCalled[0]);
+
+        
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Assert.fail("Interrupted");
+        }
+
+        final Job job1 = managementService.createJobQuery()
+                .active()
+                .executable()
+                .messages() // external task timeout is implemented as a message job
+                .singleResult();
+        Assert.assertNull("Got executable timer job, but unexpected!", job1);
+        final Incident incident1 = runtimeService
+                .createIncidentQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        Assert.assertNull("Got incident, but unexpected!", incident1);
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            Assert.fail("Interrupted");
+        }
+
+        final Job job2 = managementService.createJobQuery()
+                .active()
+                .executable()
+                .messages() // external task timeout is implemented as a message job
+                .singleResult();
+        Assert.assertNotNull("Got no executable timer job!", job2);
+        managementService.executeJob(job2.getId());
+
+        final Incident incident2 = runtimeService
+                .createIncidentQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        Assert.assertNotNull("Expected incident, but got none!", incident2);
+        Assert.assertEquals("Unexpected incident message", "TIMEOUT", incident2.getIncidentMessage());
+
+        final String responseValue = "Yeah";
+
+        synchronized (processorCalled) {
+            final String feedback = externalTaskHandler.handleAsyncInput(processorCalled[0], responseValue);
+
+            Assert.assertNotNull("feedback of handleAsyncResponse is null", feedback);
+            Assert.assertTrue("feedback of handleAsyncResponse is unexpected", asyncFeedback.equals(feedback));
+
+            try {
+                processorCalled.wait(5000);
+            } catch (InterruptedException e) {
+                Assert.fail("Interrupted");
+            }
+        }
+
+        Assert.assertNotNull("response processor not called!", processorCalled[1]);
+        Assert.assertNotNull("response processor didn't receive async response value!", processorCalled[2]);
+
+        Assert
+                .assertTrue("correlation of response does not match request",
+                        processorCalled[1].equals(processorCalled[0]));
+        Assert.assertTrue("value of response changed", processorCalled[2].equals(responseValue));
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Assert.fail("Interrupted");
+        }
+
+        final HistoricProcessInstance processInstance = historyService
+                .createHistoricProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        Assert.assertTrue("Process not ended", processInstance.getEndTime() != null);
+
+        final Map<String, Object> variablesSetByProcessor = historyService
+                .createHistoricVariableInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(HistoricVariableInstance::getName, HistoricVariableInstance::getValue));
+        Assert.assertEquals("Variable not set", variables("test", "success"), variablesSetByProcessor);
 
     }
 

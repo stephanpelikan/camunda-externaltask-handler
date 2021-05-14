@@ -1,8 +1,11 @@
 package org.camunda.bpm.externaltask.spring;
 
+import javax.annotation.PostConstruct;
+
 import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,23 @@ public class SpringExternalTaskHandler extends org.camunda.bpm.externaltask.Exte
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
     
+    @Autowired
+    private ProcessEngineConfigurationImpl processEngineConfiguration;
+
+    @PostConstruct
+    public void init() {
+
+        processEngineConfiguration
+                .getJobHandlers()
+                .put(this.getType(), this);
+
+    }
+
+    @Override
+    protected ProcessEngineConfigurationImpl getProcessEngineConfiguration() {
+        return processEngineConfiguration;
+    }
+
     @Override
     protected long getDefaultLockTimeout() {
         return defaultLockTimeout;
@@ -65,7 +85,7 @@ public class SpringExternalTaskHandler extends org.camunda.bpm.externaltask.Exte
     @Transactional
     public void fetchAndLockExternalTasks() {
         
-        processors.keySet()
+        registrations.keySet()
                 .forEach(super::fetchAndLockExternalTasks);
         
     }
