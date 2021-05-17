@@ -138,11 +138,53 @@ Ad 1: A correlation id is provided which should be send to the remote system. It
 
 Ad 2: The response handler is called once the an asynchronous response has been handed over by calling the method "handleAsyncInput". The result value of this handler is passed to the caller of the "handleAsyncInput" method and my be forwarded to the remote system waiting to complete the asynchronous remote call. Additionally, any exception thrown by the handler will be passed to the caller of the "handleAsyncInput" method and will NOT cause an incident! The handler's parameter "variablesToBeSet" can be used to set process variables on completing the BPMN activity. If upcoming processing of the workflow causes an exception and incident will be created.
 
+Hint: See also ["Advanced usage / Async response timeout"](#Async-response-timeout).
+
 ## Advanced usage
+
+### Fetching variables
+
+As a default behavior all process instance variables of the current scope (process, subprocess, etc.) are loaded and provided in a processor's variable map.
+
+Sometimes it is wise to limit the process instance variables loaded to those required to complete a particular external task. Reasons are
+1. Avoid network IO
+1. Avoid deserialization of complex variables not used 
+
+To do so the names of the variables have to be defined like this:
+```java
+externalTaskHandler.registerExternalTaskProcessor(
+        "myprocess", "mytopic1",
+        this::processServiceTask1)
+    .variablesToFetch("var1", "var2");
+```
+or like this:
+```java
+var variableNames = List.of("var1", "var2");
+externalTaskHandler.registerExternalTaskProcessor(
+        "myprocess", "mytopic1",
+        this::processServiceTask1)
+    .variablesToFetch(variableNames);
+```
+
+If one needs no process variables at all then this API can be used:
+```java
+var variableNames = List.of("var1", "var2");
+externalTaskHandler.registerExternalTaskProcessor(
+        "myprocess", "mytopic1",
+        this::processServiceTask1)
+    .fetchNoVariables();
+```
 
 ### Lock timeout
 
-External tasks need to be locked. So processing should not take more time than the lock timeout. The default timeout is a minute. If the lock timeout expires (for example due to system failures) then the task will be retried in an one minute interval. A non standard lock timeout can be defined on method regristration.
+External tasks need to be locked. So processing should not take more time than the lock timeout. The default timeout is a minute. If the lock timeout expires (for example due to system failures) then the task will be retried in an one minute interval. A non standard lock timeout can be defined on regristration.
+
+```java
+externalTaskHandler.registerExternalTaskProcessor(
+        "myprocess", "mytopic1",
+        this::processServiceTask1)
+    .lockTimeout(30000l);
+```
 
 ### Exponential back-off retry handling
 
@@ -165,6 +207,22 @@ The external task retry counter is provided which has to be passed to the Retrya
     }
   }
 ```
+
+### Async response timeout
+
+Doing asynchronous processing or communication one might want to make the task fail if there is no response in time. This cannot be achieved by setting the lock timeout because if this period expires a second attempt of completing this task will be started. If you want an incident to be created then you can define a response timeout:
+
+```java
+externalTaskHandler
+    .<String, MyResponse>registerExternalTaskProcessor(
+        "myprocess", "mytopic1",
+        this::doRequest,
+        this::processResponse)
+    .responseTimeout(60000l)
+    .responseTimeoutExpiredMessage("No response on time!"); 
+```
+
+Additionally you can define a timeout per request by returing a value other than null as part of the request processing (see [org.camunda.bpm.externaltask.spi.ExternalTaskHandlerAsyncRequestProcessor](./externaltask-handler-spi/src/main/java/org/camunda/bpm/externaltask/spi/ExternalTaskHandlerAsyncRequestProcessor.java)).
 
 ## Spring
 

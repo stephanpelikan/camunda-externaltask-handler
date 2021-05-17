@@ -14,8 +14,6 @@ public class ExternalTaskAsyncProcessingRegistrationImpl<R, I>
 
     private String responseTimeoutExpiredMessage;
 
-    private String incidentResolutionVariableName;
-
     ExternalTaskAsyncProcessingRegistrationImpl(
             final ExternalTaskHandlerAsyncRequestProcessor processor,
             final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor) {
@@ -47,17 +45,6 @@ public class ExternalTaskAsyncProcessingRegistrationImpl<R, I>
     public ExternalTaskAsyncProcessingRegistrationImpl<R, I> responseTimeoutExpiredMessage(
             String responseTimeoutExpiredMessage) {
         this.responseTimeoutExpiredMessage = responseTimeoutExpiredMessage;
-        return this;
-    }
-
-    public String getIncidentResolutionVariableName() {
-        return incidentResolutionVariableName;
-    }
-
-    @Override
-    public ExternalTaskAsyncProcessingRegistrationImpl<R, I> incidentResolutionVariableName(
-            String incidentResolutionVariableName) {
-        this.incidentResolutionVariableName = incidentResolutionVariableName;
         return this;
     }
 

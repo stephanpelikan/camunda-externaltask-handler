@@ -62,6 +62,8 @@ public class TestAsyncApi {
                         throw new RetryableException("failed with incident", 2, retries, retryTimeouts);
                     }
                     
+                    return null;
+
                 },
                 (processInstanceId, activityId, executionId, retries, correlationId, input, variablesToBeSet) -> {
 

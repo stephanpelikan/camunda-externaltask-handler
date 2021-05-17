@@ -63,7 +63,11 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     private void configure() {
         
         configurator.configure(this);
-        
+
+        getProcessEngineConfiguration()
+                .getJobHandlers()
+                .put(this.getType(), this);
+
     }
     
     @Override

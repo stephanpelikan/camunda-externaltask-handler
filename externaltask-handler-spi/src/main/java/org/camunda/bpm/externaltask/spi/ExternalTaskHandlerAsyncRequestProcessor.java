@@ -1,5 +1,6 @@
 package org.camunda.bpm.externaltask.spi;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.camunda.bpm.engine.delegate.BpmnError;
@@ -22,10 +23,13 @@ public interface ExternalTaskHandlerAsyncRequestProcessor extends ExternalTaskHa
      * @throws RetryableException Any error which should cause a retry.
      * @throws Exception          Any other error which will cause a Camunda
      *                            incident
+     * @return Can be used to override
+     *         {@link ExternalTaskAsyncProcessingRegistration#responseTimeout(Long)}
+     *         per request otherwise null
      * @see BpmnError
      * @see BpmnErrorWithVariables
      */
-    void apply(String correlationId, String processInstanceId, String activityId, String executionId,
+    Date apply(String correlationId, String processInstanceId, String activityId, String executionId,
             Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception;
 
 }

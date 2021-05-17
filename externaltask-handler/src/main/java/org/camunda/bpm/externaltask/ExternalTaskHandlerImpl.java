@@ -79,8 +79,6 @@ public abstract class ExternalTaskHandlerImpl
 
     }
 
-
-    @SuppressWarnings("unchecked")
     @Override
     public <R, I> ExternalTaskAsyncProcessingRegistration registerExternalTaskProcessor(
             final String processDefinitionKey,
@@ -188,9 +186,10 @@ public abstract class ExternalTaskHandlerImpl
                         .apply(processInstanceId, activityId, executionId, variables, retries);
                 getExternalTaskService().complete(externalTaskId, workerId, variablesToBeSet);
             } else {
-                ((ExternalTaskHandlerAsyncRequestProcessor) processor)
+                final Date responseTimeout = ((ExternalTaskHandlerAsyncRequestProcessor) processor)
                         .apply(externalTaskId, processInstanceId, activityId, executionId, variables, retries);
-                setAsyncResponseTimeout(externalTaskId, lockExpirationTime,
+                
+                setAsyncResponseTimeout(externalTaskId, lockExpirationTime, responseTimeout,
                         (ExternalTaskAsyncProcessingRegistrationImpl<?, ?>) registration);
             }
         } catch (BpmnErrorWithVariables e) {
@@ -333,14 +332,18 @@ public abstract class ExternalTaskHandlerImpl
     }
 
     private void setAsyncResponseTimeout(final String externalTaskId, final Date lockTimeout,
+            final Date overridingResponseTimeout,
             final ExternalTaskAsyncProcessingRegistrationImpl<?, ?> registration) {
 
         final Long responseTimeout = registration.getResponseTimeout();
-        if (responseTimeout == null) {
+        if ((responseTimeout == null)
+                && (overridingResponseTimeout == null)) {
             return;
         }
         
-        final Date duedate = new Date(System.currentTimeMillis() + responseTimeout);
+        final Date duedate = overridingResponseTimeout != null
+                ? overridingResponseTimeout
+                : new Date(System.currentTimeMillis() + responseTimeout);
         final CommandExecutor executor = getProcessEngineConfiguration()
                 .getCommandExecutorTxRequired();
         executor.execute(
