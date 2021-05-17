@@ -2,9 +2,8 @@ package org.camunda.bpm.externaltask;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,14 +12,22 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.externaltask.ExternalTask;
 import org.camunda.bpm.engine.externaltask.LockedExternalTask;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.camunda.bpm.engine.impl.interceptor.CommandContext;
+import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
+import org.camunda.bpm.engine.impl.jobexecutor.JobHandler;
+import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.camunda.bpm.engine.impl.persistence.entity.JobEntity;
 import org.camunda.bpm.externaltask.spi.BpmnErrorWithResult;
 import org.camunda.bpm.externaltask.spi.BpmnErrorWithResultAndVariables;
 import org.camunda.bpm.externaltask.spi.BpmnErrorWithVariables;
+import org.camunda.bpm.externaltask.spi.ExternalTaskAsyncProcessingRegistration;
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandler;
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerAsyncRequestProcessor;
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerAsyncResponseProcessor;
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerProcessor;
 import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerSyncProcessor;
+import org.camunda.bpm.externaltask.spi.ExternalTaskSyncProcessingRegistration;
 import org.camunda.bpm.externaltask.spi.RetryableException;
 import org.camunda.bpm.model.bpmn.instance.BusinessRuleTask;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
@@ -30,15 +37,20 @@ import org.camunda.bpm.model.bpmn.instance.ServiceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
+public abstract class ExternalTaskHandlerImpl
+        implements ExternalTaskHandler, JobHandler<AsyncProcessorTimeoutJobHandlerConfiguration> {
 
     private static Logger logger = LoggerFactory.getLogger(ExternalTaskHandlerImpl.class);
+
+    static final String ASYNC_TIMEOUT_HANDLER_TYPE = ExternalTaskHandlerImpl.class.getName();
 
     protected abstract long getDefaultLockTimeout();
 
     protected abstract ExternalTaskService getExternalTaskService();
     
     protected abstract RuntimeService getRuntimeService();
+
+    protected abstract ProcessEngineConfigurationImpl getProcessEngineConfiguration();
 
     protected abstract String getWorkerId();
 
@@ -48,205 +60,41 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
     
     protected abstract void scheduleFetchAndLockExternalTasks(long timeout, String key);
     
-    protected Map<String, Long> customTimeouts = new HashMap<>();
-
-    protected Map<String, ExternalTaskHandlerProcessor> processors = new HashMap<>();
-
-    protected Map<String, ExternalTaskHandlerAsyncResponseProcessor<Object, Object>> asyncResponseProcessors = new HashMap<>();
-
-    protected Map<String, List<String>> variablesToBeFetch = new HashMap<>();
+    protected Map<String, ExternalTaskSyncProcessingRegistrationImpl<?>> registrations = new HashMap<>();
 
     @Override
-    public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
+    public ExternalTaskSyncProcessingRegistration<ExternalTaskSyncProcessingRegistration<?>> registerExternalTaskProcessor(
+            final String processDefinitionKey, final String topic,
             final ExternalTaskHandlerSyncProcessor processor) {
 
-        registerExternalTaskProcessor(processDefinitionKey, topic, processor, (Long) null, false, null);
+        final ExternalTaskSyncProcessingRegistrationImpl<ExternalTaskSyncProcessingRegistration<?>> registration
+                = new ExternalTaskSyncProcessingRegistrationImpl<>(processor);
+        registration.lockTimeout(getDefaultLockTimeout());
+
+        final String key = getInternalKey(processDefinitionKey, topic);
+
+        registrations.put(key, registration);
+
+        return registration;
 
     }
 
     @Override
-    public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerSyncProcessor processor, final boolean fetchNoVariables) {
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, processor, (Long) null, fetchNoVariables, null);
-
-    }
-
-    @Override
-    public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerSyncProcessor processor, final Long lockTimeout) {
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout, false, null);
-
-    }
-
-    @Override
-    public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerSyncProcessor processor, final boolean fetchNoVariables, final Long lockTimeout) {
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout, fetchNoVariables, null);
-
-    }
-
-    @Override
-    public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerSyncProcessor processor, final String firstVariableToFetch,
-            final String... variablesToFetch) {
-
-        final List<String> variableNames = new LinkedList<>();
-        variableNames.add(firstVariableToFetch);
-        if (variablesToFetch != null) {
-            Arrays.stream(variablesToFetch).forEach(variableNames::add);
-        }
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, processor, null, false, variableNames);
-
-    }
-
-    @Override
-    public void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerSyncProcessor processor, final Long lockTimeout,
-            final String firstVariableToFetch, final String... variablesToFetch) {
-
-        final List<String> variableNames = new LinkedList<>();
-        variableNames.add(firstVariableToFetch);
-        if (variablesToFetch != null) {
-            Arrays.stream(variablesToFetch).forEach(variableNames::add);
-        }
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, processor, lockTimeout, false, variableNames);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <R, I> void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
+    public <R, I> ExternalTaskAsyncProcessingRegistration registerExternalTaskProcessor(
+            final String processDefinitionKey,
+            final String topic,
             final ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
             final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor) {
 
-        registerExternalTaskProcessor(processDefinitionKey, topic, requestProcessor, (Long) null, false, null);
-        registerExternalTaskAsyncResponseProcessor(processDefinitionKey,
-                topic,
-                (ExternalTaskHandlerAsyncResponseProcessor<Object, Object>) responseProcessor);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <R, I> void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, final boolean fetchNoVariables) {
-
-        registerExternalTaskProcessor(processDefinitionKey,
-                topic,
-                requestProcessor,
-                (Long) null,
-                fetchNoVariables,
-                null);
-        registerExternalTaskAsyncResponseProcessor(processDefinitionKey,
-                topic,
-                (ExternalTaskHandlerAsyncResponseProcessor<Object, Object>) responseProcessor);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <R, I> void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, final boolean fetchNoVariables,
-            final Long lockTimeout) {
-
-        registerExternalTaskProcessor(processDefinitionKey,
-                topic,
-                requestProcessor,
-                lockTimeout,
-                fetchNoVariables,
-                null);
-        registerExternalTaskAsyncResponseProcessor(processDefinitionKey,
-                topic,
-                (ExternalTaskHandlerAsyncResponseProcessor<Object, Object>) responseProcessor);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <R, I> void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, final Long lockTimeout) {
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, requestProcessor, lockTimeout, false, null);
-        registerExternalTaskAsyncResponseProcessor(processDefinitionKey,
-                topic,
-                (ExternalTaskHandlerAsyncResponseProcessor<Object, Object>) responseProcessor);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <R, I> void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, final String firstVariableToFetch,
-            final String... variablesToFetch) {
-
-        final LinkedList<String> variableNames = new LinkedList<>();
-        variableNames.add(firstVariableToFetch);
-        if (variablesToFetch != null) {
-            Arrays.stream(variablesToFetch).forEach(variableNames::add);
-        }
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, requestProcessor, null, false, variableNames);
-        registerExternalTaskAsyncResponseProcessor(processDefinitionKey,
-                topic,
-                (ExternalTaskHandlerAsyncResponseProcessor<Object, Object>) responseProcessor);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <R, I> void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            final ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, final Long lockTimeout,
-            final String firstVariableToFetch, final String... variablesToFetch) {
-
-        final LinkedList<String> variableNames = new LinkedList<>();
-        variableNames.add(firstVariableToFetch);
-        if (variablesToFetch != null) {
-            Arrays.stream(variablesToFetch).forEach(variableNames::add);
-        }
-
-        registerExternalTaskProcessor(processDefinitionKey, topic, requestProcessor, lockTimeout, false, variableNames);
-        registerExternalTaskAsyncResponseProcessor(processDefinitionKey,
-                topic,
-                (ExternalTaskHandlerAsyncResponseProcessor<Object, Object>) responseProcessor);
-
-    }
-
-    private void registerExternalTaskProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerProcessor processor, final Long lockTimeout, final boolean fetchNoVariables,
-            final List<String> variablesToFetch) {
+        final ExternalTaskAsyncProcessingRegistrationImpl<R, I> registration
+                = new ExternalTaskAsyncProcessingRegistrationImpl<>(requestProcessor, responseProcessor);
+        registration.lockTimeout(getDefaultLockTimeout());
 
         final String key = getInternalKey(processDefinitionKey, topic);
 
-        if (lockTimeout != null) {
-            customTimeouts.put(key, lockTimeout);
-        }
+        registrations.put(key, registration);
 
-        if (fetchNoVariables) {
-            this.variablesToBeFetch.put(key, new LinkedList<>());
-        } else {
-            this.variablesToBeFetch.put(key, variablesToFetch);
-        }
-
-        processors.put(key, processor);
-
-    }
-    
-    private void registerExternalTaskAsyncResponseProcessor(final String processDefinitionKey, final String topic,
-            final ExternalTaskHandlerAsyncResponseProcessor<Object, Object> processor) {
-
-        final String key = getInternalKey(processDefinitionKey, topic);
-
-        asyncResponseProcessors.put(key, processor);
+        return registration;
 
     }
 
@@ -265,7 +113,7 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         }
 
         final String key = getInternalKey(processDefinitionKey, topic);
-        if (!processors.containsKey(key)) {
+        if (!registrations.containsKey(key)) {
             return; // a topic not yet registered
         }
 
@@ -287,11 +135,12 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
     protected void fetchAndLockExternalTasks(final String key) {
         
         final String topic = getTopicFromInternalKey(key);
+        final ExternalTaskSyncProcessingRegistrationImpl<?> registration = registrations.get(key);
         
         final List<LockedExternalTask> externalTasks = getExternalTaskService()
                 .fetchAndLock(Integer.MAX_VALUE, getWorkerId())
-                .topic(topic, getLockTimeout(key))
-                .variables(variablesToBeFetch.get(key))
+                .topic(topic, registration.getLockTimeout())
+                .variables(registration.getVariablesToFetch())
                 .execute();
         
         if ((externalTasks == null) || externalTasks.isEmpty()) {
@@ -315,6 +164,7 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
                                         task.getProcessInstanceId(),
                                         task.getActivityId(),
                                         task.getExecutionId(),
+                                        task.getLockExpirationTime(),
                                         task.getVariables(),
                                         task.getRetries()))));
 
@@ -323,20 +173,24 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
     private void runRegisteredProcessor(final String processDefinitionKey, final String topic,
             final String externalTaskId, final String processInstanceId,
             final String activityId, final String executionId,
-            final Map<String, Object> variables, final Integer retries) {
+            final Date lockExpirationTime, final Map<String, Object> variables, final Integer retries) {
 
         final String key = getInternalKey(processDefinitionKey, topic);
+        final ExternalTaskSyncProcessingRegistrationImpl<?> registration = registrations.get(key);
+
         final String workerId = getWorkerId();
-        
         try {
-            final ExternalTaskHandlerProcessor processor = processors.get(key);
+            final ExternalTaskHandlerProcessor processor = registration.getProcessor();
             if (processor instanceof ExternalTaskHandlerSyncProcessor) {
                 final Map<String, Object> variablesToBeSet = ((ExternalTaskHandlerSyncProcessor) processor)
                         .apply(processInstanceId, activityId, executionId, variables, retries);
                 getExternalTaskService().complete(externalTaskId, workerId, variablesToBeSet);
             } else {
-                ((ExternalTaskHandlerAsyncRequestProcessor) processor)
+                final Date responseTimeout = ((ExternalTaskHandlerAsyncRequestProcessor) processor)
                         .apply(externalTaskId, processInstanceId, activityId, executionId, variables, retries);
+                
+                setAsyncResponseTimeout(externalTaskId, lockExpirationTime, responseTimeout,
+                        (ExternalTaskAsyncProcessingRegistrationImpl<?, ?>) registration);
             }
         } catch (BpmnErrorWithVariables e) {
             getExternalTaskService().handleBpmnError(externalTaskId, workerId, e.getErrorCode(), e.getMessage(), e.getVariables());
@@ -366,11 +220,24 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
                 .singleResult();
 
         final String key = getInternalKey(externalTask.getProcessDefinitionKey(), externalTask.getTopicName());
+        final ExternalTaskSyncProcessingRegistrationImpl<?> registration = registrations.get(key);
+        if (!(registration instanceof ExternalTaskAsyncProcessingRegistration)) {
+            throw new Exception("Topic '"
+                    + externalTask.getTopicName()
+                    + "' of process definition '"
+                    + externalTask.getProcessDefinitionKey()
+                    + "' was registered for synchonous processing!");
+        }
+        final ExternalTaskAsyncProcessingRegistrationImpl<R, I> asyncRegistration
+                = (ExternalTaskAsyncProcessingRegistrationImpl<R, I>) registration;
+        
+        final ExternalTaskHandlerAsyncResponseProcessor<R, I> asyncResponseProcessor
+                = asyncRegistration.getResponseProcessor();
+
         final Map<String, Object> variablesToBeSet = new HashMap<>();
         R result = null;
         try {
-            result = (R) asyncResponseProcessors
-                    .get(key)
+            result = asyncResponseProcessor
                     .apply(externalTask.getProcessInstanceId(),
                             externalTask.getActivityId(),
                             externalTask.getExecutionId(),
@@ -422,13 +289,6 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         return result;
 
     }
-
-    @SuppressWarnings("boxing")
-    private long getLockTimeout(final String key) {
-
-        return customTimeouts.getOrDefault(key, getDefaultLockTimeout()).longValue();
-
-    }
     
     private static String getInternalKey(final String processDefinitionKey, final String topic) {
 
@@ -468,6 +328,84 @@ public abstract class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         } else {
             return null;
         }
+
+    }
+
+    private void setAsyncResponseTimeout(final String externalTaskId, final Date lockTimeout,
+            final Date overridingResponseTimeout,
+            final ExternalTaskAsyncProcessingRegistrationImpl<?, ?> registration) {
+
+        final Long responseTimeout = registration.getResponseTimeout();
+        if ((responseTimeout == null)
+                && (overridingResponseTimeout == null)) {
+            return;
+        }
+        
+        final Date duedate = overridingResponseTimeout != null
+                ? overridingResponseTimeout
+                : new Date(System.currentTimeMillis() + responseTimeout);
+        final CommandExecutor executor = getProcessEngineConfiguration()
+                .getCommandExecutorTxRequired();
+        executor.execute(
+                new AsyncProcessorTimeoutTimerCommand(duedate, externalTaskId, lockTimeout));
+        
+    }
+
+    /**
+     * Call by Camunda's Job Executor once a async processor times out
+     */
+    @Override
+    public void execute(final AsyncProcessorTimeoutJobHandlerConfiguration configuration,
+            final ExecutionEntity execution, final CommandContext commandContext, final String tenantId) {
+
+        final String externalTaskId = configuration.getExternalTaskId();
+        final ExternalTask externalTask = getExternalTaskService()
+                .createExternalTaskQuery()
+                .externalTaskId(externalTaskId)
+                .locked()
+                .singleResult();
+        // already completed or not yet locked
+        if (externalTask == null) {
+            return;
+        }
+        // timeout timer belongs to expired external task execution
+        if (!externalTask.getLockExpirationTime().equals(configuration.getLockTimeout())) {
+            return;
+        }
+        // external task lock already expired - ignore timer
+        if (externalTask.getLockExpirationTime().before(new Date())) {
+            return;
+        }
+        
+        final String key = getInternalKey(externalTask.getProcessDefinitionKey(), externalTask.getTopicName());
+        final ExternalTaskAsyncProcessingRegistrationImpl<?, ?> registration = (ExternalTaskAsyncProcessingRegistrationImpl<?, ?>) registrations
+                .get(key);
+        
+        getExternalTaskService()
+                .handleFailure(externalTaskId, getWorkerId(), registration.getResponseTimeoutExpiredMessage(), 0, 0l);
+
+    }
+
+    @Override
+    public String getType() {
+
+        return ExternalTaskHandlerImpl.ASYNC_TIMEOUT_HANDLER_TYPE;
+
+    }
+
+    @Override
+    public org.camunda.bpm.externaltask.AsyncProcessorTimeoutJobHandlerConfiguration newConfiguration(
+            String canonicalString) {
+
+        return new AsyncProcessorTimeoutJobHandlerConfiguration(canonicalString);
+
+    }
+
+    @Override
+    public void onDelete(org.camunda.bpm.externaltask.AsyncProcessorTimeoutJobHandlerConfiguration configuration,
+            JobEntity jobEntity) {
+
+        // no action required
 
     }
 

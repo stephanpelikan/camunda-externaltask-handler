@@ -19,10 +19,12 @@ import javax.transaction.Synchronization;
 import javax.transaction.TransactionSynchronizationRegistry;
 
 import org.camunda.bpm.engine.ExternalTaskService;
+import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.cdi.BusinessProcessEvent;
 import org.camunda.bpm.engine.cdi.BusinessProcessEventType;
+import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 
 @Singleton
@@ -54,13 +56,27 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     @Inject
     private ExternalTaskHandlerConfigurator configurator;
     
+    @Inject
+    private ProcessEngine processEngine;
+
     @PostConstruct
     private void configure() {
         
         configurator.configure(this);
-        
+
+        getProcessEngineConfiguration()
+                .getJobHandlers()
+                .put(this.getType(), this);
+
     }
     
+    @Override
+    protected ProcessEngineConfigurationImpl getProcessEngineConfiguration() {
+
+        return (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
+
+    }
+
     @Override
     protected long getDefaultLockTimeout() {
         return defaultLockTimeout;
@@ -95,7 +111,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void fetchAndLockExternalTasks() {
         
-        processors.keySet()
+        registrations.keySet()
                 .forEach(super::fetchAndLockExternalTasks);
         
     }

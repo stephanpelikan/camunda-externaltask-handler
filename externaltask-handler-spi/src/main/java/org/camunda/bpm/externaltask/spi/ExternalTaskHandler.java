@@ -114,8 +114,8 @@ public interface ExternalTaskHandler {
      * 
      * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
      */
-    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerSyncProcessor processor);
+    ExternalTaskSyncProcessingRegistration<ExternalTaskSyncProcessingRegistration<?>> registerExternalTaskProcessor(
+            String processDefinitionKey, String topic, ExternalTaskHandlerSyncProcessor processor);
     
     /**
      * Register processor for a certain process definition and a specific topic.
@@ -132,8 +132,8 @@ public interface ExternalTaskHandler {
      * 
      * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
      */
-    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerSyncProcessor processor, boolean fetchNoVariables);
+//    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerSyncProcessor processor, boolean fetchNoVariables);
     
     /**
      * Register processor for a certain process definition and a specific topic.
@@ -149,8 +149,8 @@ public interface ExternalTaskHandler {
      * 
      * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
      */
-    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerSyncProcessor processor, Long lockTimeout);
+//    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerSyncProcessor processor, Long lockTimeout);
 
     /**
      * Register processor for a certain process definition and a specific topic.
@@ -167,8 +167,8 @@ public interface ExternalTaskHandler {
      * 
      * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
      */
-    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerSyncProcessor processor, boolean fetchNoVariables, Long lockTimeout);
+//    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerSyncProcessor processor, boolean fetchNoVariables, Long lockTimeout);
 
     /**
      * Register processor for a certain process definition and a specific topic.
@@ -187,9 +187,9 @@ public interface ExternalTaskHandler {
      * 
      * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
      */
-    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerSyncProcessor processor, String firstVariableToFetch,
-            String... variablesToFetch);
+//    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerSyncProcessor processor, String firstVariableToFetch,
+//            String... variablesToFetch);
     
     /**
      * Register processor for a certain process definition and a specific topic.
@@ -208,9 +208,9 @@ public interface ExternalTaskHandler {
      * 
      * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
      */
-    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerSyncProcessor processor, Long lockTimeout,
-            String firstVariableToFetch, String... variablesToFetch);
+//    void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerSyncProcessor processor, Long lockTimeout,
+//            String firstVariableToFetch, String... variablesToFetch);
 
     /**
      * Register processors for asynchronous processing for a certain process
@@ -235,7 +235,8 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
      *      Integer, String, Object)
      */
-    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+    <R, I> ExternalTaskAsyncProcessingRegistration registerExternalTaskProcessor(String processDefinitionKey,
+            String topic,
             ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
             ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor);
 
@@ -264,9 +265,9 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
      *      Integer, String, Object)
      */
-    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, boolean fetchNoVariables);
+//    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+//            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, boolean fetchNoVariables);
 
     /**
      * Register processors for async processing for a certain process definition and
@@ -294,10 +295,10 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
      *      Integer, String, Object)
      */
-    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, boolean fetchNoVariables,
-            Long lockTimeout);
+//    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+//            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, boolean fetchNoVariables,
+//            Long lockTimeout);
 
     /**
      * Register processors for async processing for a certain process definition and
@@ -323,9 +324,9 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
      *      Integer, String, Object)
      */
-    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, Long lockTimeout);
+//    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+//            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, Long lockTimeout);
 
     /**
      * Register processors for async processing for a certain process definition and
@@ -355,10 +356,10 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
      *      Integer, String, Object)
      */
-    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, Long lockTimeout,
-            String firstVariableToFetch, String... variablesToFetch);
+//    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+//            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, Long lockTimeout,
+//            String firstVariableToFetch, String... variablesToFetch);
 
     /**
      * Register processors for async processing for a certain process definition and
@@ -387,10 +388,10 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
      *      Integer, String, Object)
      */
-    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
-            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
-            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, String firstVariableToFetch,
-            String... variablesToFetch);
+//    <R, I> void registerExternalTaskProcessor(String processDefinitionKey, String topic,
+//            ExternalTaskHandlerAsyncRequestProcessor requestProcessor,
+//            ExternalTaskHandlerAsyncResponseProcessor<R, I> responseProcessor, String firstVariableToFetch,
+//            String... variablesToFetch);
 
     /**
      * Feed asynchronous input to the external task handler which will call the
