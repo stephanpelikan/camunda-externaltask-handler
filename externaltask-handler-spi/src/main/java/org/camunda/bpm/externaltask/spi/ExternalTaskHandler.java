@@ -18,16 +18,16 @@ import java.util.Map;
  *      externalTaskHandler.registerExternalTaskProcessor("myprocess", "mytopic1", this::processServiceTask1); 
  *      // variant 2:
  *      externalTaskHandler.registerExternalTaskProcessor("myprocess", "mytopic2",
- *          ((processInstanceId, activityId, executionId, variables) -> processServiceTask2(variables))); 
+ *          ((processInstanceId, activityId, executionId, variables) -&gt; processServiceTask2(variables))); 
  *   }
  *   
- *   public Map<String, Object> processServiceTask1(String processInstanceId, String activityId, String executionId,
- *          Map<String, Object> variables) throws BpmnError, RetryableException, Exception {
+ *   public Map&lt;String, Object&gt; processServiceTask1(String processInstanceId, String activityId, String executionId,
+ *          Map&lt;String, Object&gt; variables) throws BpmnError, RetryableException, Exception {
  *      doSomething();
  *      return null; // do not change or set any process variable
  *   }
  *
- *   private Map<String, Object> processServiceTask2(variables) {
+ *   private Map&lt;String, Object&gt; processServiceTask2(variables) {
  *      String myOrderId = (String) variables.get("myOrderId");
  *      String result = doWhatever(myOrderId);
  *      return Map.of("whatever", result); // set process variables
@@ -50,13 +50,13 @@ import java.util.Map;
  *   
  *   &#64;PostConstruct
  *   private void init() {
- *      externalTaskHandler.<String, MyResponse>registerExternalTaskProcessor("myprocess", "mytopic1", this::processRequest,
- *              (processInstanceId, activityId, executionId, retries, correlationId, response, variableToBeSet) ->
+ *      externalTaskHandler.&lt;String, MyResponse&gt;registerExternalTaskProcessor("myprocess", "mytopic1", this::processRequest,
+ *              (processInstanceId, activityId, executionId, retries, correlationId, response, variableToBeSet) -&gt;
  *                      processResponse(correlationId, response, variableToBeSet); 
  *   }
  *   
  *   private void processRequest(String correlationId, String processInstanceId, String activityId, String executionId,
- *          Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception {
+ *          Map&lt;String, Object&gt; variables, Integer retries) throws BpmnError, RetryableException, Exception {
  *      try {
  *          client.doSomething(correlationId, variables.get("myOrderId"));
  *      } catch (Exception e) {
@@ -83,17 +83,7 @@ import java.util.Map;
  * </p>
  * <ul>
  * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, Long)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, boolean)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, boolean, Long)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, String, String...)
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, Long, String, String...)
  * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerAsyncRequestProcessor, ExternalTaskHandlerAsyncResponseProcessor)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerAsyncRequestProcessor, ExternalTaskHandlerAsyncResponseProcessor, Long)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerAsyncRequestProcessor, ExternalTaskHandlerAsyncResponseProcessor, boolean)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerAsyncRequestProcessor, ExternalTaskHandlerAsyncResponseProcessor, boolean, Long)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerAsyncRequestProcessor, ExternalTaskHandlerAsyncResponseProcessor, String, String...)}
- * <li>ExternalTaskHandler{@link #registerExternalTaskProcessor(String, String, ExternalTaskHandlerAsyncRequestProcessor, ExternalTaskHandlerAsyncResponseProcessor, Long, String, String...)}
  * </ul>
  * 
  * @author Stephan Pelikan
@@ -104,15 +94,16 @@ public interface ExternalTaskHandler {
      * Register processor for a certain process definition and a specific topic.
      * <ul>
      * <li>All process variables will be fetched and supplied on execution</li>
-     * <li>The default lock timeout will be uses (1 minute or Spring
-     * property &quot;application.external-task-handler.lock-timeout&quot;)</li>
+     * <li>The default lock timeout will be uses (1 minute or Spring property
+     * &quot;application.external-task-handler.lock-timeout&quot;)</li>
      * </ul>
      * 
      * @param processDefinitionKey
      * @param topic
      * @param processor
      * 
-     * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map)
+     * @see ExternalTaskHandlerSyncProcessor#apply(String, String, String, Map,
+     *      Integer)
      */
     ExternalTaskSyncProcessingRegistration<ExternalTaskSyncProcessingRegistration<?>> registerExternalTaskProcessor(
             String processDefinitionKey, String topic, ExternalTaskHandlerSyncProcessor processor);
@@ -233,7 +224,7 @@ public interface ExternalTaskHandler {
      * @see ExternalTaskHandlerAsyncRequestProcessor#apply(String, String, String,
      *      String, Map, Integer)
      * @see ExternalTaskHandlerAsyncResponseProcessor#apply(String, String, String,
-     *      Integer, String, Object)
+     *      Integer, String, Object, Map)
      */
     <R, I> ExternalTaskAsyncProcessingRegistration registerExternalTaskProcessor(String processDefinitionKey,
             String topic,
@@ -408,7 +399,7 @@ public interface ExternalTaskHandler {
      * @param <R>           The result of the response handler which might be passed
      *                      to the source of this input
      * @param correlationId
-     * @param response
+     * @param input
      * @return Any result of the response handler
      * @throws Exception Any exception thrown by the response handler.
      */
@@ -426,9 +417,6 @@ public interface ExternalTaskHandler {
      * @param lockTimeout Use as a lock timeout for external tasks, if no specific timeout was used.
      * 
      * @see https://docs.camunda.org/manual/7.13/user-guide/process-engine/external-tasks/
-     * @see ExternalTaskHandler#registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, Long)
-     * @see ExternalTaskHandler#registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, boolean, Long)
-     * @see ExternalTaskHandler#registerExternalTaskProcessor(String, String, ExternalTaskHandlerSyncProcessor, Long, String, String...)
      */
     void setDefaultLockTimeout(long lockTimeout);
     

@@ -25,7 +25,7 @@ public interface ExternalTaskHandlerAsyncResponseProcessor<R, I> {
      *                   processed by the workflow
      * @throws Exception Any other error which will cause a Camunda incident
      * @return Any result given to the caller of
-     *         {@link ExternalTaskHandler#handleAsyncResponse(String, Object)}
+     *         {@link ExternalTaskHandler#handleAsyncInput(String, Object)}
      * @see BpmnError Can be used to indicate a BPMN error. The result to
      *      {@link ExternalTaskHandler#handleAsyncInput(String, Object)} will be
      *      null.

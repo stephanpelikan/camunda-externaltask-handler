@@ -35,8 +35,8 @@ public interface ExternalTaskSyncProcessingRegistration<T extends ExternalTaskSy
     /**
      * Do not fetch any variables. If neither this method nor
      * {@link ExternalTaskSyncProcessingRegistration#variablesToFetch(List)} or
-     * {@link ExternalTaskSyncProcessingRegistration#variablesToFetch(String...))}
-     * is used then all variables will be fetch.
+     * {@link ExternalTaskSyncProcessingRegistration#variablesToFetch(String...)} is
+     * used then all variables will be fetch.
      * 
      * @return the current registration for fluent API
      */
