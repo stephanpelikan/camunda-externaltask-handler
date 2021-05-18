@@ -1,4 +1,6 @@
-# camunda-externaltask-handler
+<a href="https://github.com/camunda-community-hub/community" target="_blank"><img src="https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700" align="left"/></a>
+
+# <img src="https://avatars.githubusercontent.com/u/2443838?s=23&v=4" width="23" height="23"></img>&nbsp;Camunda Externaltask Handler
 
 This library provides the ExternalTaskHandler bean which can be used for local implementation of [Camunda's external tasks ](https://docs.camunda.org/manual/7.14/user-guide/process-engine/external-tasks/) in a simplified way.
 
@@ -297,3 +299,9 @@ Additionally, there is a test webapp `ejb-externaltask-testwebapp`. It tests the
 * [http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/test/retry](http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/test/retry)
 * [http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/async-test/handle](http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/async-test/handle)
 * [http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/async-test/retry](http://localhost:8080/ejb-externaltask-testwebapp-0.0.1-SNAPSHOT/api/async-test/retry)
+
+## Maintenance &amp; License
+
+<a href="https://www.phactum.at" target="_blank"><img src="readme/phactum_logo.png" align="right"></img></a>
+Phactum<br/>[Company](www.phactum.at) &#8226; [GitHub](https://github.com/phactum-at)
+&#8226; [E-Mail](mailto:stephan.pelikan@phactum.at)<br/>Apache License, Version 2.0
