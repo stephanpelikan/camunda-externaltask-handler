@@ -302,6 +302,6 @@ Additionally, there is a test webapp `ejb-externaltask-testwebapp`. It tests the
 
 ## Maintenance &amp; License
 
-<a href="https://www.phactum.at" target="_blank"><img src="readme/phactum_logo.png" align="right"></img></a>
+<a href="https://www.phactum.at" target="_blank"><img src="readme/phactum_logo.png" width="300" align="right"></img></a>
 Phactum<br/>[Company](www.phactum.at) &#8226; [GitHub](https://github.com/phactum-at)
 &#8226; [E-Mail](mailto:stephan.pelikan@phactum.at)<br/>Apache License, Version 2.0
