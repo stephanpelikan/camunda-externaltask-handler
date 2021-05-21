@@ -30,7 +30,9 @@
 	</modules>
 
 	<build>
-		<plugins>
+		<defaultGoal>clean install</defaultGoal>
+		
+	    <plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -40,7 +42,17 @@
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
+
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-release-plugin</artifactId>
+	            <configuration>
+	                <autoVersionSubmodules>true</autoVersionSubmodules>
+	                <localCheckout>true</localCheckout>
+	            </configuration>
+	        </plugin>
 		</plugins>
+		
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -77,6 +89,21 @@
 		</pluginManagement>
 	</build>
 
+    <repositories>
+        <repository>
+            <id>camunda-bpm-nexus</id>
+            <name>camunda-bpm-nexus</name>
+            <url>https://app.camunda.com/nexus/content/groups/public</url>
+        </repository>
+    </repositories>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    
 	<scm>
 		<connection>scm:git:git@github.com:stephanpelikan/camunda-externaltask-handler.git</connection>
 		<url>scm:git:git@github.com:stephanpelikan/camunda-externaltask-handler.git</url>
@@ -84,4 +111,49 @@
 		<tag>HEAD</tag>
 	</scm>
 
+    <distributionManagement>
+        <repository>
+            <id>camunda-nexus</id>
+            <name>camunda bpm community extensions</name>
+            <url>https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions</url>
+        </repository>
+        <snapshotRepository>
+            <id>camunda-nexus</id>
+            <name>camunda bpm community extensions snapshots</name>
+            <url>https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions-snapshots</url>
+            <!-- for maven 2 compatibility -->
+            <uniqueVersion>true</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
+    
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <!-- Prevent gpg from using pinentry programs -->
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
