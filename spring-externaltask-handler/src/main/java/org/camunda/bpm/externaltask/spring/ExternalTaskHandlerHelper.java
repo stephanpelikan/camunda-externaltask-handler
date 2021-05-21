@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
 public class ExternalTaskHandlerHelper {
@@ -14,15 +14,25 @@ public class ExternalTaskHandlerHelper {
     @Autowired
     private TaskScheduler taskScheduler;
     
-    @SuppressWarnings("static-method")
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     @Async
-    @Transactional
     void processAsynchronously(final Runnable task) {
-        task.run();
+        processTransactional(task);
     }
     
     void schedule(final long timeout, final Runnable task) {
-        taskScheduler.schedule(task, new Date(System.currentTimeMillis() + timeout));
+        taskScheduler.schedule(
+                () -> processTransactional(task),
+                new Date(System.currentTimeMillis() + timeout));
+    }
+    
+    <T> T processTransactional(final Runnable task) {
+        return transactionTemplate.execute(txStatus -> {
+            task.run();
+            return null;
+        });
     }
 
 }

@@ -11,6 +11,7 @@ import javax.ejb.TransactionAttributeType;
 @Lock(LockType.READ)
 public class CdiExternalTaskHandlerHelper {
 
+    @SuppressWarnings("static-method")
     @Asynchronous
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void processAsynchronously(final Runnable task) {

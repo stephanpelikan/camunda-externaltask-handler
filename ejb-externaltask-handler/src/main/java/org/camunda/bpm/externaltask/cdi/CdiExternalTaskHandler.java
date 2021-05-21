@@ -128,7 +128,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
             @Override
             public void afterCompletion(int status) {
                 if (status == Status.STATUS_COMMITTED) {
-                    helper.processAsynchronously(action);
+                    processAsynchronously(action);
                 }
             }
         });
@@ -143,6 +143,7 @@ public class CdiExternalTaskHandler extends org.camunda.bpm.externaltask.Externa
     }
 
     @Timeout
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void fetchAndLockExternalTasks(Timer timer) {
         
         super.fetchAndLockExternalTasks((String) timer.getInfo());
