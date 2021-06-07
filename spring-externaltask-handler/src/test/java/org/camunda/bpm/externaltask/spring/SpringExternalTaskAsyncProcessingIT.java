@@ -73,9 +73,9 @@ public class SpringExternalTaskAsyncProcessingIT {
         externalTaskHandler
                 .<String, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (correlationId, processInstanceId, activityId, executionId, variables,
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
                                 retries) -> processRequest(processorCalled, correlationId),
-                        (processInstanceId, activityId, executionId, retries, correlationId,
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId,
                                 response, variablesToBeSet) -> setVariableProcessor(processorCalled,
                                         correlationId,
                                         response,
@@ -182,9 +182,9 @@ public class SpringExternalTaskAsyncProcessingIT {
         externalTaskHandler
                 .<String, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (correlationId, processInstanceId, activityId, executionId, variables,
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
                                 retries) -> processRequest(processorCalled, correlationId),
-                        (processInstanceId, activityId, executionId, retries, correlationId,
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId,
                                 response, variablesToBeSet) -> throwBpmnErrorProcessor(processorCalled,
                                         correlationId, response, asyncFeedback));
 
@@ -269,9 +269,9 @@ public class SpringExternalTaskAsyncProcessingIT {
         externalTaskHandler
                 .<Void, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (correlationId, processInstanceId, activityId, executionId, variables,
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
                                 retries) -> processRequest(processorCalled, correlationId),
-                        (processInstanceId, activityId, executionId, retries, correlationId,
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId,
                                 response, variableToBeSet) -> throwBpmnErrorWithVariablesProcessor(processorCalled,
                                         correlationId, response, variableToBeSet));
 
@@ -358,9 +358,9 @@ public class SpringExternalTaskAsyncProcessingIT {
         externalTaskHandler
                 .<Void, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (correlationId, processInstanceId, activityId, executionId, variables,
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
                                 retries) -> processRequest(processorCalled, correlationId),
-                        (processInstanceId, activityId, executionId, retries, correlationId,
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId,
                                 response,
                                 variablesToBeSet) -> throwExceptionProcessor(processorCalled, correlationId, response));
 
@@ -429,9 +429,9 @@ public class SpringExternalTaskAsyncProcessingIT {
         externalTaskHandler
                 .<String, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (correlationId, processInstanceId, activityId, executionId, variables,
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
                                 retries) -> processRequest(processorCalled, correlationId),
-                        (processInstanceId, activityId, executionId, retries, correlationId, response,
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId, response,
                                 variablesToBeSet) -> setVariableProcessor(processorCalled,
                                         correlationId,
                                         response,
@@ -551,11 +551,12 @@ public class SpringExternalTaskAsyncProcessingIT {
         externalTaskHandler
                 .<String, String>registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (correlationId, processInstanceId, activityId, executionId, variables, retries) -> {
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> {
                             processRequest(processorCalled, correlationId);
                             return new Date(System.currentTimeMillis() + 6000);
                         },
-                        (processInstanceId, activityId, executionId, retries, correlationId, response,
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId, response,
                                 variablesToBeSet) -> setVariableProcessor(processorCalled,
                                         correlationId,
                                         response,

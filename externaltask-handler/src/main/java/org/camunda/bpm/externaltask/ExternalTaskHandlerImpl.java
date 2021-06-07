@@ -161,6 +161,7 @@ public abstract class ExternalTaskHandlerImpl
                                         task.getProcessDefinitionKey(),
                                         task.getTopicName(),
                                         task.getId(),
+                                        task.getBusinessKey(),
                                         task.getProcessInstanceId(),
                                         task.getActivityId(),
                                         task.getExecutionId(),
@@ -171,7 +172,7 @@ public abstract class ExternalTaskHandlerImpl
     }
 
     private void runRegisteredProcessor(final String processDefinitionKey, final String topic,
-            final String externalTaskId, final String processInstanceId,
+            final String externalTaskId, final String businessKey, final String processInstanceId,
             final String activityId, final String executionId,
             final Date lockExpirationTime, final Map<String, Object> variables, final Integer retries) {
 
@@ -183,11 +184,11 @@ public abstract class ExternalTaskHandlerImpl
             final ExternalTaskHandlerProcessor processor = registration.getProcessor();
             if (processor instanceof ExternalTaskHandlerSyncProcessor) {
                 final Map<String, Object> variablesToBeSet = ((ExternalTaskHandlerSyncProcessor) processor)
-                        .apply(processInstanceId, activityId, executionId, variables, retries);
+                        .apply(processInstanceId, businessKey, activityId, executionId, variables, retries);
                 getExternalTaskService().complete(externalTaskId, workerId, variablesToBeSet);
             } else {
                 final Date responseTimeout = ((ExternalTaskHandlerAsyncRequestProcessor) processor)
-                        .apply(externalTaskId, processInstanceId, activityId, executionId, variables, retries);
+                        .apply(externalTaskId, processInstanceId, businessKey, activityId, executionId, variables, retries);
                 
                 setAsyncResponseTimeout(externalTaskId, lockExpirationTime, responseTimeout,
                         (ExternalTaskAsyncProcessingRegistrationImpl<?, ?>) registration);
@@ -239,6 +240,7 @@ public abstract class ExternalTaskHandlerImpl
         try {
             result = asyncResponseProcessor
                     .apply(externalTask.getProcessInstanceId(),
+                            externalTask.getBusinessKey(),
                             externalTask.getActivityId(),
                             externalTask.getExecutionId(),
                             externalTask.getRetries(),

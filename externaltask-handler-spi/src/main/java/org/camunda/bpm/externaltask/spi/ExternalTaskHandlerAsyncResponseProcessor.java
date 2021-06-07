@@ -15,6 +15,7 @@ public interface ExternalTaskHandlerAsyncResponseProcessor<R, I> {
 
     /**
      * @param processInstanceId The task's processInstanceId
+     * @param businessKey       The process' businessKey
      * @param activityId        The task's activityId
      * @param executionId       The task's executionId
      * @param retries           How many attempts left (null if first attempt)
@@ -39,7 +40,7 @@ public interface ExternalTaskHandlerAsyncResponseProcessor<R, I> {
      *      set variables and provide a result for
      *      {@link ExternalTaskHandler#handleAsyncInput(String, Object)}.
      */
-    R apply(String processInstanceId, String activityId, String executionId, Integer retries, String correlationId,
-            I input, Map<String, Object> variablesToBeSet) throws BpmnError, Exception;
+    R apply(String processInstanceId, String businessKey, String activityId, String executionId, Integer retries,
+            String correlationId, I input, Map<String, Object> variablesToBeSet) throws BpmnError, Exception;
 
 }

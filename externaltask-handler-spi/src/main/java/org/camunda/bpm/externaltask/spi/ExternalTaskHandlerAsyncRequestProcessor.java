@@ -13,7 +13,10 @@ import org.camunda.bpm.engine.delegate.BpmnError;
 public interface ExternalTaskHandlerAsyncRequestProcessor extends ExternalTaskHandlerProcessor {
 
     /**
+     * @param correlationId     The task's correlationId which must be used to
+     *                          correlate async responses
      * @param processInstanceId The task's processInstanceId
+     * @param businessKey       The process' businessKey
      * @param activityId        The task's activityId
      * @param executionId       The task's executionId
      * @param variables         The variables fetched for processing
@@ -29,7 +32,7 @@ public interface ExternalTaskHandlerAsyncRequestProcessor extends ExternalTaskHa
      * @see BpmnError
      * @see BpmnErrorWithVariables
      */
-    Date apply(String correlationId, String processInstanceId, String activityId, String executionId,
+    Date apply(String correlationId, String processInstanceId, String buinessKey, String activityId, String executionId,
             Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception;
 
 }

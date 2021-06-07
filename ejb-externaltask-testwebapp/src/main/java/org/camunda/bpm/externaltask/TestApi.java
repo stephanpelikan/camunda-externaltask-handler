@@ -42,7 +42,7 @@ public class TestApi {
     public void init() {
         
         externalTaskHandler.registerExternalTaskProcessor("ExternalTaskProcess", "TestTopic",
-                (processInstanceId, activityId, executionId, variables, retries) -> {
+                (processInstanceId, businessKey, activityId, executionId, variables, retries) -> {
                     
                     called[0]++;
                     synchronized (called) {

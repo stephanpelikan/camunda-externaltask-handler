@@ -68,7 +68,8 @@ public class SpringExternalTaskSyncProcessingIT {
         
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> setVariableProcessor(processorCalled, processInstanceId, variables));
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> setVariableProcessor(processorCalled, processInstanceId, variables));
 
         String processInstanceId = null;
         
@@ -126,7 +127,8 @@ public class SpringExternalTaskSyncProcessingIT {
         
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> throwBpmnErrorProcessor(processorCalled, processInstanceId, variables));
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> throwBpmnErrorProcessor(processorCalled, processInstanceId, variables));
 
         String processInstanceId = null;
         
@@ -184,7 +186,10 @@ public class SpringExternalTaskSyncProcessingIT {
         
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> throwBpmnErrorWithVariablesProcessor(processorCalled, processInstanceId, variables));
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> throwBpmnErrorWithVariablesProcessor(processorCalled,
+                                        processInstanceId,
+                                        variables));
 
         String processInstanceId = null;
         
@@ -242,7 +247,11 @@ public class SpringExternalTaskSyncProcessingIT {
         
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> throwExceptionProcessor(processorCalled, processInstanceId, variables, retries));
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> throwExceptionProcessor(processorCalled,
+                                        processInstanceId,
+                                        variables,
+                                        retries));
 
         String processInstanceId = null;
         
@@ -309,7 +318,11 @@ public class SpringExternalTaskSyncProcessingIT {
         
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> throwRetryableExceptionProcessor(processorCalled, processInstanceId, variables, retries));
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> throwRetryableExceptionProcessor(processorCalled,
+                                        processInstanceId,
+                                        variables,
+                                        retries));
 
         String processInstanceId = null;
         
@@ -385,7 +398,8 @@ public class SpringExternalTaskSyncProcessingIT {
         
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY, TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables));
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables));
 
         String processInstanceId = null;
         
@@ -431,7 +445,7 @@ public class SpringExternalTaskSyncProcessingIT {
         externalTaskHandler
                 .registerExternalTaskProcessor(TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC,
-                        (processInstanceId, activityId, executionId, variables, retries)
+                        (processInstanceId, businessKey, activityId, executionId, variables, retries)
                                 -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
                 .fetchNoVariables();
 
@@ -480,7 +494,8 @@ public class SpringExternalTaskSyncProcessingIT {
                 .registerExternalTaskProcessor(
                         TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
                     .variablesToFetch("initA");
 
         String processInstanceId = null;
@@ -528,7 +543,8 @@ public class SpringExternalTaskSyncProcessingIT {
                 .registerExternalTaskProcessor(
                         TESTPROCESS_DEFINITION_KEY,
                         TESTPROCESS_TESTTOPIC, 
-                        (processInstanceId, activityId, executionId, variables, retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
+                        (processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> fetchVariableProcessor(processorCalled, processInstanceId, variables))
                     .variablesToFetch("initA", "initB");
 
         String processInstanceId = null;

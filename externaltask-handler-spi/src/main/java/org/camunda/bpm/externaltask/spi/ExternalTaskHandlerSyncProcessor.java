@@ -12,6 +12,7 @@ public interface ExternalTaskHandlerSyncProcessor extends ExternalTaskHandlerPro
 
     /**
      * @param processInstanceId The task's processInstanceId
+     * @param businessKey       The process' businessKey
      * @param activityId        The task's activityId
      * @param executionId       The task's executionId
      * @param variables         The variables fetched for processing
@@ -26,7 +27,7 @@ public interface ExternalTaskHandlerSyncProcessor extends ExternalTaskHandlerPro
      * @see BpmnErrorWithVariables
      * @see RetryableException
      */
-    Map<String, Object> apply(String processInstanceId, String activityId, String executionId,
+    Map<String, Object> apply(String processInstanceId, String businessKey, String activityId, String executionId,
             Map<String, Object> variables, Integer retries) throws BpmnError, RetryableException, Exception;
 
 }

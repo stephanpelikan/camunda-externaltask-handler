@@ -46,7 +46,8 @@ public class TestAsyncApi {
         externalTaskHandler
                 .<String, String>registerExternalTaskProcessor("AsyncExternalTaskProcess",
                         "AsyncTestTopic",
-                (correlationId, processInstanceId, activityId, executionId, variables, retries) -> {
+                        (correlationId, processInstanceId, businessKey, activityId, executionId, variables,
+                                retries) -> {
                     
                     called[0]++;
                     testCorrelationIds[0] = correlationId;
@@ -65,7 +66,8 @@ public class TestAsyncApi {
                     return null;
 
                 },
-                (processInstanceId, activityId, executionId, retries, correlationId, input, variablesToBeSet) -> {
+                        (processInstanceId, businessKey, activityId, executionId, retries, correlationId, input,
+                                variablesToBeSet) -> {
 
                             Assert.assertTrue("mismatching correlationId", testCorrelationIds[0].equals(correlationId));
 
