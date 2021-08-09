@@ -2,10 +2,13 @@ package org.camunda.bpm.externaltask;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.camunda.bpm.engine.ExternalTaskService;
 import org.camunda.bpm.engine.RuntimeService;
@@ -30,10 +33,12 @@ import org.camunda.bpm.externaltask.spi.ExternalTaskHandlerSyncProcessor;
 import org.camunda.bpm.externaltask.spi.ExternalTaskSyncProcessingRegistration;
 import org.camunda.bpm.externaltask.spi.RetryableException;
 import org.camunda.bpm.model.bpmn.instance.BusinessRuleTask;
+import org.camunda.bpm.model.bpmn.instance.EventDefinition;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.model.bpmn.instance.MessageEventDefinition;
 import org.camunda.bpm.model.bpmn.instance.SendTask;
 import org.camunda.bpm.model.bpmn.instance.ServiceTask;
+import org.camunda.bpm.model.bpmn.instance.ThrowEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -331,13 +336,36 @@ public abstract class ExternalTaskHandlerImpl
             return ((ServiceTask) bpmnElement).getCamundaTopic();
         } else if (bpmnElement instanceof SendTask) {
             return ((SendTask) bpmnElement).getCamundaTopic();
-        } else if (bpmnElement instanceof MessageEventDefinition) {
-            return ((MessageEventDefinition) bpmnElement).getCamundaTopic();
         } else if (bpmnElement instanceof BusinessRuleTask) {
             return ((BusinessRuleTask) bpmnElement).getCamundaTopic();
-        } else {
-            return null;
+        } else if (bpmnElement instanceof ThrowEvent) {
+            ThrowEvent event = (ThrowEvent) bpmnElement;
+            Optional<MessageEventDefinition> messageEventDefinition = getSingleMessageEventDefinition(event);
+            if (messageEventDefinition.isPresent()) {
+                return messageEventDefinition.get().getCamundaTopic();
+            }
         }
+        return null;
+
+    }
+
+    private static Optional<MessageEventDefinition> getSingleMessageEventDefinition(ThrowEvent throwEvent) {
+
+        final Collection<EventDefinition> defs = throwEvent.getEventDefinitions();
+        if (defs.size() > 1) {
+            throw new IllegalArgumentException("Expected only a single event definition");
+        }
+
+        final Iterator<EventDefinition> defIterator = defs.iterator();
+
+        if (defIterator.hasNext()) {
+            final EventDefinition def = defIterator.next();
+            if (def instanceof MessageEventDefinition) {
+                return Optional.of((MessageEventDefinition) def);
+            }
+        }
+
+        return Optional.empty();
 
     }
 
