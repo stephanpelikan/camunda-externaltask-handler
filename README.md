@@ -8,11 +8,16 @@ Advantages:
 * Loose coupling since this API does not use Camunda specific classes
 * Simplified API for reading and setting process variables
 * Streamlined error handling regardless of the current thread's owner (application thread or job executor thread)
-* Exponential back-off retry handling which is useful for doing remote calls
-* Don't block job execution thread by doing synchronous processing of activities 
+* Don't block job execution thread by doing synchronous processing of activities
 
 Disadvantages:
 * External tasks need more transactions and therefore are slower in execution. For common business processes this is not an issue.
+
+Main features (in addition to the advantages listed above):
+* Exponential back-off retry handling which is useful for doing remote calls
+* Event based - no polling
+* Supports asynchronous communication
+  * Response timeout handling
 
 *Usage:*
 
@@ -138,7 +143,7 @@ In this situations two handlers need to be registered:
 
 Ad 1: A correlation id is provided which should be send to the remote system. It has to be part of the asynchronous response and is necessary to correlate the response message to a particular waiting BPMN activity. Unlike the synchronous handler this request handler has a void return value since no process variables may be set as part of sending the request. If this is necessary one has to use the Camunda API. This handler supports the same error handling strategies as the synchronous handler.
 
-Ad 2: The response handler is called once the an asynchronous response has been handed over by calling the method "handleAsyncInput". The result value of this handler is passed to the caller of the "handleAsyncInput" method and my be forwarded to the remote system waiting to complete the asynchronous remote call. Additionally, any exception thrown by the handler will be passed to the caller of the "handleAsyncInput" method and will NOT cause an incident! The handler's parameter "variablesToBeSet" can be used to set process variables on completing the BPMN activity. If upcoming processing of the workflow causes an exception and incident will be created.
+Ad 2: The response handler is called once an asynchronous response has been handed over by calling the method "handleAsyncInput". The result value of this handler is passed to the caller of the "handleAsyncInput" method and my be forwarded to the remote system waiting to complete the asynchronous remote call. Additionally, any exception thrown by the handler will be passed to the caller of the "handleAsyncInput" method and will NOT cause an incident! The handler's parameter "variablesToBeSet" can be used to set process variables on completing the BPMN activity. If upcoming processing of the workflow causes an exception and incident will be created.
 
 Hint: See also ["Advanced usage / Async response timeout"](#Async-response-timeout).
 
