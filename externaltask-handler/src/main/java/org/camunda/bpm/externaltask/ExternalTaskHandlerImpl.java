@@ -135,11 +135,13 @@ public abstract class ExternalTaskHandlerImpl
     protected void fetchAndLockExternalTasks(final String key) {
         
         final String topic = getTopicFromInternalKey(key);
+        final String processDefinitionKey = getProcessDefinitionKeyFromInternalKey(key);
         final ExternalTaskSyncProcessingRegistrationImpl<?> registration = registrations.get(key);
         
         final List<LockedExternalTask> externalTasks = getExternalTaskService()
                 .fetchAndLock(Integer.MAX_VALUE, getWorkerId())
                 .topic(topic, registration.getLockTimeout())
+                .processDefinitionKey(processDefinitionKey)
                 .variables(registration.getVariablesToFetch())
                 .execute();
         
@@ -304,6 +306,12 @@ public abstract class ExternalTaskHandlerImpl
 
     }
     
+    private static String getProcessDefinitionKeyFromInternalKey(final String key) {
+
+        return key.substring(0, key.indexOf('#'));
+
+    }
+
     private static String buildIncidentDetails(final Exception e) {
         
         try (final StringWriter result = new StringWriter()) {
